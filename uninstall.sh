@@ -149,9 +149,27 @@ PYEOF
     rmdir "$HOME/.skill-pack" 2>/dev/null || true
 }
 
+remove_claude_agents() {
+    local agents_dst="$HOME/.claude/agents"
+    [[ ! -d "$agents_dst" ]] && skip "No skill-pack agents found" && return
+
+    local removed=0
+    for f in "$agents_dst"/*.md; do
+        [[ -f "$f" ]] || continue
+        if grep -qF "skill-pack: true" "$f" 2>/dev/null; then
+            rm "$f"
+            log "Removed agent: $f"
+            removed=$((removed + 1))
+        fi
+    done
+    [[ $removed -eq 0 ]] && skip "No skill-pack agents found"
+    rmdir "$agents_dst" 2>/dev/null || true
+}
+
 echo "Global tool configs:"
 remove_skills_from_file "$HOME/.claude/CLAUDE.md"
 remove_claude_hooks
+remove_claude_agents
 remove_skills_from_file "$HOME/.gemini/GEMINI.md"
 remove_skills_from_file "$HOME/.windsurfrules"
 remove_cursor_rules

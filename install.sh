@@ -272,6 +272,41 @@ with open(settings_path, 'w') as f:
 PYEOF
 }
 
+install_claude_agents() {
+    local agents_src="$REPO_DIR/agents"
+    local agents_dst="$HOME/.claude/agents"
+
+    [[ ! -d "$agents_src" ]] && return 0
+
+    # Prune stale agents (skill-pack managed, no longer in repo)
+    if [[ -z "$SELECTED_SKILLS" ]] && [[ -d "$agents_dst" ]]; then
+        for f in "$agents_dst"/*.md; do
+            [[ -f "$f" ]] || continue
+            if grep -qF "skill-pack: true" "$f" 2>/dev/null; then
+                local fname
+                fname="$(basename "$f")"
+                if [[ ! -f "$agents_src/$fname" ]]; then
+                    rm "$f"
+                    log "Removed stale agent: $f"
+                fi
+            fi
+        done
+    fi
+
+    mkdir -p "$agents_dst"
+    for f in "$agents_src"/*.md; do
+        [[ -f "$f" ]] || continue
+        local fname
+        fname="$(basename "$f")"
+        if [[ -f "$agents_dst/$fname" ]] && diff -q "$f" "$agents_dst/$fname" &>/dev/null; then
+            skip "Already installed: agent/$fname"
+        else
+            cp "$f" "$agents_dst/"
+            log "Installed agent: $fname → $agents_dst"
+        fi
+    done
+}
+
 install_claude_code() {
     local target="$HOME/.claude/CLAUDE.md"
     echo ""
@@ -279,6 +314,7 @@ install_claude_code() {
     prune_stale_skills "claude" "$target"
     each_skill _do_append "claude" "$target"
     install_claude_hooks
+    install_claude_agents
 }
 
 install_gemini_cli() {

@@ -65,6 +65,20 @@ Hooks are Claude Code only. Other tools (Cursor, Windsurf, Gemini) use the stati
 
 ---
 
+## Agents (Claude Code)
+
+`install.sh` installs subagents to `~/.claude/agents/`. These are invoked by the main Claude thread for bounded tasks:
+
+| Agent | When to use | Model |
+|---|---|---|
+| `investigator` | Find where code is defined, list callers, map a directory | Haiku |
+| `builder` | Surgical 1-2 file edits: typos, renames, single-function rewrites | Haiku |
+| `reviewer` | Review a diff, PR, or file for bugs and risks | Sonnet |
+
+Re-running `install.sh` updates agents and removes any that were deleted from the repo. Agents not installed by skill-pack are never touched.
+
+---
+
 ## Skills
 
 ### `skills/code-quality/`
