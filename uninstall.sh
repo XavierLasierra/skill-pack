@@ -30,8 +30,8 @@ remove_skills_from_file() {
     local tmp
     tmp="$(mktemp)"
     awk -v start="$MARKER_START" -v end="$MARKER_END" '
-        index($0, start) { skip=1; next }
-        skip && index($0, end) { skip=0; next }
+        substr($0, 1, length(start)) == start { skip=1; next }
+        skip && substr($0, 1, length(end)) == end { skip=0; next }
         !skip { print }
     ' "$file" > "$tmp"
 
@@ -74,7 +74,7 @@ remove_kiro_steering() {
         local skill_name="${skill_md#"$REPO_DIR/skills/"}"
         skill_name="${skill_name%.md}"
         local f="$kiro_dir/${skill_name//\//-}.md"
-        if [[ -f "$f" ]]; then
+        if [[ -f "$f" ]] && grep -qF "<!-- skill-pack -->" "$f" 2>/dev/null; then
             rm "$f"
             log "Removed: $f"
             removed=$((removed + 1))

@@ -141,8 +141,8 @@ remove_skill_block() {
     local tmp
     tmp="$(mktemp)"
     awk -v start="$start" -v end="$end" '
-        index($0, start) { skip=1; next }
-        skip && index($0, end) { skip=0; next }
+        $0 == start { skip=1; next }
+        skip && $0 == end { skip=0; next }
         !skip { print }
     ' "$target" > "$tmp"
     mv "$tmp" "$target"
@@ -410,7 +410,7 @@ _do_kiro() {
         return
     fi
     local target="$kiro_dir/${skill_name//\//-}.md"
-    skill_content "$skill_file" > "$target"
+    { echo "<!-- skill-pack -->"; skill_content "$skill_file"; } > "$target"
     log "Installed: $skill_name → $target"
 }
 
@@ -421,6 +421,7 @@ prune_kiro_steering() {
 
     for f in "$kiro_dir"/*.md; do
         [[ -f "$f" ]] || continue
+        grep -qF "<!-- skill-pack -->" "$f" 2>/dev/null || continue
         local fname
         fname="$(basename "$f")"
         local found=0
