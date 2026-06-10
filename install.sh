@@ -279,7 +279,8 @@ install_claude_agents() {
     [[ ! -d "$agents_src" ]] && return 0
 
     # Prune stale agents (skill-pack managed, no longer in repo)
-    if [[ -z "$SELECTED_SKILLS" ]] && [[ -d "$agents_dst" ]]; then
+    # Not gated on SELECTED_SKILLS — agents are independent of skill selection
+    if [[ -d "$agents_dst" ]]; then
         for f in "$agents_dst"/*.md; do
             [[ -f "$f" ]] || continue
             if grep -qF "skill-pack: true" "$f" 2>/dev/null; then
@@ -351,7 +352,7 @@ prune_cursor_rules() {
         [[ -f "$f" ]] || continue
         if grep -qF "skill-pack/" "$f" 2>/dev/null; then
             local skill_name
-            skill_name="$(grep 'description: skill-pack/' "$f" | sed 's|.*description: skill-pack/||')"
+            skill_name="$(grep 'description: skill-pack/' "$f" | sed 's|.*description: skill-pack/||' | tr -d '[:space:]')"
             local skill_file="$SKILLS_DIR/${skill_name}.md"
             if [[ ! -f "$skill_file" ]] || ! skill_applies_to "$skill_file" "cursor"; then
                 rm "$f"
@@ -508,11 +509,11 @@ detect_and_install() {
         fi
 
         # Always regenerate project-level templates
-        install_copilot
-        install_cline
-        install_amp
-        install_kiro
-        install_roo
+        install_copilot;  installed=$((installed + 1))
+        install_cline;    installed=$((installed + 1))
+        install_amp;      installed=$((installed + 1))
+        install_kiro;     installed=$((installed + 1))
+        install_roo;      installed=$((installed + 1))
     fi
 
     echo ""
