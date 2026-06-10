@@ -1,0 +1,9 @@
+.DS_Store
+*.log
+
+# Generated template files — produced by install.sh, not source of truth
+.clinerules
+.github/copilot-instructions.md
+AGENTS.md
+.roorules
+.kiro/
