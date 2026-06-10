@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # skill-pack installer
 # Detects installed AI coding tools and injects skills into their config.
-# Re-running updates existing skills (upsert, not skip).
+# Re-running syncs skills: updates changed, removes deleted, adds new.
 
 set -euo pipefail
 
@@ -119,9 +119,56 @@ each_skill() {
 }
 
 # ------------------------------------------------------------------
-# Core: upsert a skill block into a target config file
+# Core: remove / upsert / prune skill blocks in marker-based files
 # ------------------------------------------------------------------
 
+# Remove a single skill block identified by key from a target file.
+# Guards against missing end marker to avoid eating the rest of the file.
+remove_skill_block() {
+    local target="$1"
+    local key="$2"
+    local start="${MARKER_START}${key}"
+    local end="${MARKER_END}${key}"
+
+    if ! grep -qF "$start" "$target" 2>/dev/null; then
+        return 0
+    fi
+    if ! grep -qF "$end" "$target" 2>/dev/null; then
+        warn "Missing end marker for $key in $(basename "$target") — skipping removal"
+        return 1
+    fi
+
+    local tmp
+    tmp="$(mktemp)"
+    awk -v start="$start" -v end="$end" '
+        index($0, start) { skip=1; next }
+        skip && index($0, end) { skip=0; next }
+        !skip { print }
+    ' "$target" > "$tmp"
+    mv "$tmp" "$target"
+}
+
+# Remove skill blocks present in a file but no longer in the repo (or no longer
+# applying to the given tool). Skipped on partial --skills installs to avoid
+# removing skills the user didn't touch.
+prune_stale_skills() {
+    local tool="$1"
+    local target="$2"
+
+    [[ ! -f "$target" ]] && return 0
+    [[ -n "$SELECTED_SKILLS" ]] && return 0
+
+    while IFS= read -r key; do
+        local skill_file="$SKILLS_DIR/${key}.md"
+        if [[ ! -f "$skill_file" ]] || ! skill_applies_to "$skill_file" "$tool"; then
+            if remove_skill_block "$target" "$key"; then
+                log "Removed stale: $key → $(basename "$target")"
+            fi
+        fi
+    done < <(grep -F "$MARKER_START" "$target" 2>/dev/null | sed "s|.*${MARKER_START}||")
+}
+
+# Upsert a skill block into a target config file.
 append_skill() {
     local skill_file="$1"
     local skill_name="$2"
@@ -140,14 +187,7 @@ append_skill() {
 
     local action="Installed"
     if grep -qF "$start" "$target" 2>/dev/null; then
-        local tmp
-        tmp="$(mktemp)"
-        awk -v start="$start" -v end="$end" '
-            index($0, start) { skip=1 }
-            !skip             { print }
-            index($0, end)   { skip=0 }
-        ' "$target" > "$tmp"
-        mv "$tmp" "$target"
+        remove_skill_block "$target" "$skill_name"
         action="Updated"
     fi
 
@@ -186,7 +226,7 @@ install_claude_hooks() {
     done
 
     python3 - "$hook_dst" "$settings" <<'PYEOF'
-import json, os, sys
+import json, os, shlex, sys
 
 hook_dir, settings_path = sys.argv[1], sys.argv[2]
 
@@ -199,9 +239,8 @@ except (FileNotFoundError, json.JSONDecodeError):
 hooks = settings.setdefault('hooks', {})
 
 to_register = [
-    ('SessionStart',     None, f'bash {hook_dir}/session-start.sh'),
-    ('UserPromptSubmit', '',   f'bash {hook_dir}/user-prompt-submit.sh'),
-    ('Statusline',       None, f'bash {hook_dir}/statusline.sh'),
+    ('SessionStart',     None, f'bash {shlex.quote(hook_dir + "/session-start.sh")}'),
+    ('UserPromptSubmit', '',   f'bash {shlex.quote(hook_dir + "/user-prompt-submit.sh")}'),
 ]
 
 for event, matcher, cmd in to_register:
@@ -219,6 +258,13 @@ for event, matcher, cmd in to_register:
     else:
         print(f'\033[0;90m–\033[0m Already registered: {event}')
 
+statusline_cmd = f'bash {shlex.quote(hook_dir + "/statusline.sh")}'
+if settings.get('statusLine', {}).get('command') != statusline_cmd:
+    settings['statusLine'] = {'type': 'command', 'command': statusline_cmd}
+    print(f'\033[0;32m✓\033[0m Registered: statusLine → {statusline_cmd}')
+else:
+    print(f'\033[0;90m–\033[0m Already registered: statusLine')
+
 os.makedirs(os.path.dirname(settings_path), exist_ok=True)
 with open(settings_path, 'w') as f:
     json.dump(settings, f, indent=2)
@@ -230,6 +276,7 @@ install_claude_code() {
     local target="$HOME/.claude/CLAUDE.md"
     echo ""
     echo "▸ Claude Code"
+    prune_stale_skills "claude" "$target"
     each_skill _do_append "claude" "$target"
     install_claude_hooks
 }
@@ -238,6 +285,7 @@ install_gemini_cli() {
     local target="$HOME/.gemini/GEMINI.md"
     echo ""
     echo "▸ Gemini CLI"
+    prune_stale_skills "gemini" "$target"
     each_skill _do_append "gemini" "$target"
 }
 
@@ -258,11 +306,31 @@ _do_cursor() {
     log "Installed: $skill_name → $target"
 }
 
+prune_cursor_rules() {
+    local rules_dir="$1"
+    [[ ! -d "$rules_dir" ]] && return 0
+    [[ -n "$SELECTED_SKILLS" ]] && return 0
+
+    for f in "$rules_dir"/*.mdc; do
+        [[ -f "$f" ]] || continue
+        if grep -qF "skill-pack/" "$f" 2>/dev/null; then
+            local skill_name
+            skill_name="$(grep 'description: skill-pack/' "$f" | sed 's|.*description: skill-pack/||')"
+            local skill_file="$SKILLS_DIR/${skill_name}.md"
+            if [[ ! -f "$skill_file" ]] || ! skill_applies_to "$skill_file" "cursor"; then
+                rm "$f"
+                log "Removed stale: $f"
+            fi
+        fi
+    done
+}
+
 install_cursor() {
     local rules_dir="$HOME/.cursor/rules"
     mkdir -p "$rules_dir"
     echo ""
     echo "▸ Cursor"
+    prune_cursor_rules "$rules_dir"
     each_skill _do_cursor "$rules_dir"
 }
 
@@ -270,6 +338,7 @@ install_windsurf() {
     local target="$HOME/.windsurfrules"
     echo ""
     echo "▸ Windsurf"
+    prune_stale_skills "windsurf" "$target"
     each_skill _do_append "windsurf" "$target"
 }
 
@@ -278,6 +347,7 @@ install_copilot() {
     mkdir -p "$REPO_DIR/.github"
     echo ""
     echo "▸ GitHub Copilot (template — copy .github/copilot-instructions.md to each project)"
+    prune_stale_skills "copilot" "$target"
     each_skill _do_append "copilot" "$target"
 }
 
@@ -285,6 +355,7 @@ install_cline() {
     local target="$REPO_DIR/.clinerules"
     echo ""
     echo "▸ Cline (template — copy .clinerules to each project)"
+    prune_stale_skills "cline" "$target"
     each_skill _do_append "cline" "$target"
 }
 
@@ -292,6 +363,7 @@ install_amp() {
     local target="$REPO_DIR/AGENTS.md"
     echo ""
     echo "▸ Amp / Sourcegraph (template — copy AGENTS.md to each project root)"
+    prune_stale_skills "amp" "$target"
     each_skill _do_append "amp" "$target"
 }
 
@@ -306,11 +378,37 @@ _do_kiro() {
     log "Installed: $skill_name → $target"
 }
 
+prune_kiro_steering() {
+    local kiro_dir="$1"
+    [[ ! -d "$kiro_dir" ]] && return 0
+    [[ -n "$SELECTED_SKILLS" ]] && return 0
+
+    for f in "$kiro_dir"/*.md; do
+        [[ -f "$f" ]] || continue
+        local fname
+        fname="$(basename "$f")"
+        local found=0
+        while IFS= read -r skill_file; do
+            local skill_name="${skill_file#"$SKILLS_DIR/"}"
+            skill_name="${skill_name%.md}"
+            if skill_applies_to "$skill_file" "kiro" && [[ "${skill_name//\//-}.md" == "$fname" ]]; then
+                found=1
+                break
+            fi
+        done < <(find "$SKILLS_DIR" -name "*.md" | sort)
+        if [[ $found -eq 0 ]]; then
+            rm "$f"
+            log "Removed stale: $f"
+        fi
+    done
+}
+
 install_kiro() {
     local kiro_dir="$REPO_DIR/.kiro/steering"
     mkdir -p "$kiro_dir"
     echo ""
     echo "▸ Kiro / AWS (template — copy .kiro/ to each project root)"
+    prune_kiro_steering "$kiro_dir"
     each_skill _do_kiro "$kiro_dir"
 }
 
@@ -318,6 +416,7 @@ install_roo() {
     local target="$REPO_DIR/.roorules"
     echo ""
     echo "▸ Roo Code (template — copy .roorules to each project root)"
+    prune_stale_skills "roo" "$target"
     each_skill _do_append "roo" "$target"
 }
 
@@ -383,7 +482,7 @@ detect_and_install() {
     if [[ $installed -eq 0 ]] && [[ -z "$SELECTED_TOOLS" ]]; then
         warn "No AI CLI tools detected. Templates written to repo — copy manually."
     else
-        log "Done. Re-run to update skills. bash uninstall.sh to remove."
+        log "Done. Re-run to sync skills. bash uninstall.sh to remove."
     fi
 }
 

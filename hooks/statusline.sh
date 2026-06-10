@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Outputs active concise level for the Claude Code status bar.
-
 LEVEL_FILE="$HOME/.skill-pack/concise-level"
 DEFAULT_LEVEL="full"
 

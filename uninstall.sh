@@ -30,9 +30,9 @@ remove_skills_from_file() {
     local tmp
     tmp="$(mktemp)"
     awk -v start="$MARKER_START" -v end="$MARKER_END" '
-        index($0, start) { skip=1 }
-        !skip             { print }
-        index($0, end)   { skip=0 }
+        index($0, start) { skip=1; next }
+        skip && index($0, end) { skip=0; next }
+        !skip { print }
     ' "$file" > "$tmp"
 
     # Delete file if nothing meaningful remains
@@ -111,19 +111,18 @@ remove_claude_hooks() {
     # Remove from settings.json
     if [[ -f "$settings" ]] && command -v python3 &>/dev/null; then
         python3 - "$hook_dst" "$settings" <<'PYEOF'
-import json, os, sys
+import json, os, shlex, sys
 
 hook_dir, settings_path = sys.argv[1], sys.argv[2]
 to_remove = {
-    f'bash {hook_dir}/session-start.sh',
-    f'bash {hook_dir}/user-prompt-submit.sh',
-    f'bash {hook_dir}/statusline.sh',
+    f'bash {shlex.quote(hook_dir + "/session-start.sh")}',
+    f'bash {shlex.quote(hook_dir + "/user-prompt-submit.sh")}',
 }
 
 try:
     with open(settings_path) as f:
         settings = json.load(f)
-except:
+except (FileNotFoundError, json.JSONDecodeError, OSError):
     sys.exit(0)
 
 for event in list(settings.get('hooks', {})):
@@ -133,6 +132,10 @@ for event in list(settings.get('hooks', {})):
     settings['hooks'][event] = [e for e in entries if e.get('hooks')]
 
 settings['hooks'] = {k: v for k, v in settings.get('hooks', {}).items() if v}
+
+statusline_cmd = f'bash {shlex.quote(hook_dir + "/statusline.sh")}'
+if settings.get('statusLine', {}).get('command') == statusline_cmd:
+    del settings['statusLine']
 
 with open(settings_path, 'w') as f:
     json.dump(settings, f, indent=2)
@@ -150,7 +153,6 @@ echo "Global tool configs:"
 remove_skills_from_file "$HOME/.claude/CLAUDE.md"
 remove_claude_hooks
 remove_skills_from_file "$HOME/.gemini/GEMINI.md"
-remove_skills_from_file "$HOME/GEMINI.md"
 remove_skills_from_file "$HOME/.windsurfrules"
 remove_cursor_rules
 

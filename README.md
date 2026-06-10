@@ -14,7 +14,7 @@ cd skill-pack
 bash install.sh
 ```
 
-The installer detects which tools you have and copies skills into the right config files. Re-running **updates** existing skills (upsert, not skip).
+The installer detects which tools you have and copies skills into the right config files. Re-running **syncs**: updates changed skills, removes skills deleted from the repo, and adds new ones.
 
 ```bash
 bash uninstall.sh   # removes everything it added
@@ -41,13 +41,13 @@ bash install.sh --tools claude --skills clean-code,concise
 
 Skills injected once into `CLAUDE.md` work but drift — the LLM gets verbose over long sessions. Hooks fix that.
 
-`install.sh` automatically registers three hooks in `~/.claude/settings.json`:
+`install.sh` automatically registers two hooks and a status line in `~/.claude/settings.json`:
 
-| Hook | What it does |
+| Setting | What it does |
 |---|---|
-| `SessionStart` | Injects active concise level rules on startup |
-| `UserPromptSubmit` | Reinjects rules every turn — prevents drift |
-| `Statusline` | Shows active level in the status bar (`concise:full`) |
+| `hooks.SessionStart` | Injects active concise level rules on startup |
+| `hooks.UserPromptSubmit` | Reinjects rules every turn — prevents drift |
+| `statusLine` | Shows active level in the status bar (`concise:full`) |
 
 Hook scripts are installed to `~/.skill-pack/hooks/`. Active level persists in `~/.skill-pack/concise-level`.
 
@@ -85,7 +85,7 @@ Hooks are Claude Code only. Other tools (Cursor, Windsurf, Gemini) use the stati
 
 | Skill | What it does |
 |---|---|
-| `concise` | Drop filler, use fragments, no pleasantries, no summaries |
+| `concise` | Drop filler, use fragments, no pleasantries, no summaries. `/concise` level switching in Claude Code |
 
 ### `skills/performance/`
 
@@ -158,7 +158,14 @@ Each skill is a plain markdown file. The installer appends them to the config fi
 # <<< skill-pack:communication/concise
 ```
 
-The markers let `uninstall.sh` remove them cleanly without touching anything else in your config. Re-running `install.sh` detects existing markers and replaces the content (upsert), so skills stay in sync with the source files.
+The markers let `install.sh` and `uninstall.sh` operate without touching anything else in your config.
+
+Re-running `install.sh` **syncs** the config against `skills/`:
+- **Updated** — skill exists, content changed → block replaced in-place
+- **Removed stale** — skill deleted from repo (or `applies_to` no longer includes the tool) → block pruned
+- **Installed** — new skill → block appended
+
+Partial installs (`--skills foo,bar`) skip pruning — only the selected skills are touched.
 
 ---
 
