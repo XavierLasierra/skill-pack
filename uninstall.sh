@@ -149,6 +149,28 @@ PYEOF
     rmdir "$HOME/.skill-pack" 2>/dev/null || true
 }
 
+remove_claude_commands() {
+    local cmds_src="$REPO_DIR/commands"
+    local cmds_dst="$HOME/.claude/commands"
+
+    [[ ! -d "$cmds_src" ]] && return 0
+
+    local removed=0
+    for f in "$cmds_src"/*.md; do
+        [[ -f "$f" ]] || continue
+        local fname dst_file
+        fname="$(basename "$f")"
+        dst_file="$cmds_dst/$fname"
+        if [[ -f "$dst_file" ]]; then
+            rm "$dst_file"
+            log "Removed command: $dst_file"
+            removed=$((removed + 1))
+        fi
+    done
+    [[ $removed -eq 0 ]] && skip "No skill-pack commands found"
+    rmdir "$cmds_dst" 2>/dev/null || true
+}
+
 remove_claude_agents() {
     local agents_dst="$HOME/.claude/agents"
     [[ ! -d "$agents_dst" ]] && skip "No skill-pack agents found" && return
@@ -170,6 +192,7 @@ echo "Global tool configs:"
 remove_skills_from_file "$HOME/.claude/CLAUDE.md"
 remove_claude_hooks
 remove_claude_agents
+remove_claude_commands
 remove_skills_from_file "$HOME/.gemini/GEMINI.md"
 remove_skills_from_file "$HOME/.windsurfrules"
 remove_cursor_rules

@@ -314,21 +314,6 @@ install_claude_commands() {
 
     [[ ! -d "$cmds_src" ]] && return 0
 
-    # Prune stale commands (skill-pack managed, no longer in repo)
-    if [[ -d "$cmds_dst" ]]; then
-        for f in "$cmds_dst"/*.md; do
-            [[ -f "$f" ]] || continue
-            if grep -qF "skill-pack: true" "$f" 2>/dev/null; then
-                local fname
-                fname="$(basename "$f")"
-                if [[ ! -f "$cmds_src/$fname" ]]; then
-                    rm "$f"
-                    log "Removed stale command: $f"
-                fi
-            fi
-        done
-    fi
-
     mkdir -p "$cmds_dst"
     for f in "$cmds_src"/*.md; do
         [[ -f "$f" ]] || continue
