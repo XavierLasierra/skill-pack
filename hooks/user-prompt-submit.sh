@@ -5,15 +5,15 @@ LEVEL_FILE="$HOME/.skill-pack/concise-level"
 DEFAULT_LEVEL="full"
 
 # Read prompt from Claude Code's stdin JSON payload
-prompt=$(python3 2>/dev/null <<'PYEOF'
+_raw=$(cat)
+prompt=$(echo "$_raw" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
     print(data.get('prompt', '').strip())
 except (json.JSONDecodeError, KeyError, TypeError, ValueError):
     print('')
-PYEOF
-) || prompt=""
+" 2>/dev/null) || prompt=""
 
 # Handle /concise command
 if [[ "$prompt" =~ ^/concise([[:space:]]|$) ]]; then
