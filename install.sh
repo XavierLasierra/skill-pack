@@ -308,6 +308,41 @@ install_claude_agents() {
     done
 }
 
+install_claude_commands() {
+    local cmds_src="$REPO_DIR/commands"
+    local cmds_dst="$HOME/.claude/commands"
+
+    [[ ! -d "$cmds_src" ]] && return 0
+
+    # Prune stale commands (skill-pack managed, no longer in repo)
+    if [[ -d "$cmds_dst" ]]; then
+        for f in "$cmds_dst"/*.md; do
+            [[ -f "$f" ]] || continue
+            if grep -qF "skill-pack: true" "$f" 2>/dev/null; then
+                local fname
+                fname="$(basename "$f")"
+                if [[ ! -f "$cmds_src/$fname" ]]; then
+                    rm "$f"
+                    log "Removed stale command: $f"
+                fi
+            fi
+        done
+    fi
+
+    mkdir -p "$cmds_dst"
+    for f in "$cmds_src"/*.md; do
+        [[ -f "$f" ]] || continue
+        local fname
+        fname="$(basename "$f")"
+        if [[ -f "$cmds_dst/$fname" ]] && diff -q "$f" "$cmds_dst/$fname" &>/dev/null; then
+            skip "Already installed: command/$fname"
+        else
+            cp "$f" "$cmds_dst/"
+            log "Installed command: $fname → $cmds_dst"
+        fi
+    done
+}
+
 install_claude_code() {
     local target="$HOME/.claude/CLAUDE.md"
     echo ""
@@ -316,6 +351,7 @@ install_claude_code() {
     each_skill _do_append "claude" "$target"
     install_claude_hooks
     install_claude_agents
+    install_claude_commands
 }
 
 install_gemini_cli() {
