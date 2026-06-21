@@ -27,7 +27,7 @@ const { mutate, isPending } = useMutation({
 ### Rules
 - **Query keys** are the cache identity: stable, serializable, include every input the `queryFn` depends on (`['todos', { status, page }]`). Wrong keys = stale or duplicated data.
 - **Read with `useQuery`, write with `useMutation`.** After a mutation, `invalidateQueries` the affected keys — don't manually `setState`.
-- Render the three states explicitly: pending, error, success. No `data!` before the pending guard.
+- Render the three states explicitly: pending, error, success — their UX (skeleton/empty/error) is [[fe-ui-states]]. No `data!` before the pending guard.
 - Don't copy server data into `useState` — read it from the cache. Mirroring is the same desync bug as [[fe-react-effects]] derived state.
 - Set sensible `staleTime` instead of refetching everything constantly.
 - Server Components (Next.js App Router): fetch directly in the server component; use TanStack Query for client-side cache/mutations on top.

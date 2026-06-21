@@ -21,6 +21,7 @@ The biggest quality lever most teams skip. Most issues are missing semantics, br
 - Everything interactive is reachable and operable by keyboard (Tab/Enter/Space/Esc). Visible focus ring — never `outline: none` without a replacement.
 - Modal/dialog: move focus in on open, trap it, restore it to the trigger on close.
 - Don't add `tabIndex` > 0 (breaks natural order).
+- Touch target size is WCAG 2.5.8 (≥ 24×24 px floor) — sizing and thumb reach live in [[fe-touch]].
 
 ### ARIA — only when no native element fits
 - First rule of ARIA: don't use ARIA if a native element does the job. Wrong ARIA is worse than none.

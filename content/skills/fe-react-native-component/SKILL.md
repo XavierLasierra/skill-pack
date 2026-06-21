@@ -5,7 +5,7 @@ targets: [all]
 ---
 ## React Native Component
 
-Composition, props API, hooks rules, state/effect discipline, and memoization are identical to web — apply [[fe-react-component]] and [[fe-react-effects]] unchanged. Below is only what RN does differently.
+Composition, props API, hooks rules, state/effect discipline, and memoization are identical to web — apply [[fe-react-component]] and [[fe-react-effects]] unchanged. [[fe-touch]] (target sizes, safe areas) and [[fe-ui-foundations]] (spacing/type scale, tokens) apply too. Below is only what RN does differently.
 
 ### Primitives
 - No DOM. Use `View`/`Text`/`Pressable`/`Image`/`ScrollView`, not `div`/`span`/`button`.
@@ -17,6 +17,7 @@ Composition, props API, hooks rules, state/effect discipline, and memoization ar
 - `StyleSheet.create({...})` defined once at module scope, not inline object literals re-created every render.
 - No CSS cascade, no units (numbers are density-independent pixels), Flexbox only and `flexDirection` defaults to `column`.
 - Compose with arrays for conditional styles: `style={[styles.base, isActive && styles.active]}`.
+- No hardcoded colors/sizes — pull from a shared theme/token module, not literals scattered per file ([[fe-ui-foundations]]).
 
 ### Lists
 - Long/unbounded data → `FlatList`/`SectionList`, never `.map()` inside a `ScrollView` (renders everything, leaks memory).

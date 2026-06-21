@@ -37,6 +37,7 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **rule** | `flow-model-usage-agy` (agy model-fit warning) | — | ✅ |
 | **rule** | `flow-concise` (full spec, switchable) | ✅ | — |
 | **rule** | `flow-concise-base` (always-on, static) | — | ✅ |
+| **rule** | `fe-aesthetic` (anti-slop UI nudge) | ✅ | ✅ |
 | **skill** | `cq-code-review` | ✅ | ✅ |
 | **skill** | `cq-simplify-review` (over-engineering only) | ✅ | ✅ |
 | **skill** | `cq-simplify-debt` (shortcut ledger) | ✅ | ✅ |
@@ -56,6 +57,10 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `fe-react-performance` (measure-first debugging) | ✅ | ✅ |
 | **skill** | `fe-react-state-management` (state decision guide) | ✅ | ✅ |
 | **skill** | `fe-react-forms` (React Hook Form + zod) | ✅ | ✅ |
+| **skill** | `fe-responsive` (mobile-first responsive layout) | ✅ | ✅ |
+| **skill** | `fe-touch` (touch/mobile/tablet interaction) | ✅ | ✅ |
+| **skill** | `fe-ui-states` (loading/empty/error/success UX) | ✅ | ✅ |
+| **skill** | `fe-ui-foundations` (spacing/type/tokens/dark mode) | ✅ | ✅ |
 | **command** | `/flow-handoff` | ✅ | ✅ |
 | **command** | `/flow-concise` | ✅ | — |
 | **agent** | `sp-reviewer`, `sp-investigator`, `sp-builder` | ✅ | ✅ |

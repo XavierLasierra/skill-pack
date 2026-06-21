@@ -7,6 +7,8 @@ targets: [all]
 
 Builds on [[cq-clean-code]] — apply it, don't repeat it. For state, effects, and re-render performance, use [[fe-react-effects]]. The best component is small, pure, and composed from smaller ones.
 
+Presentation siblings: [[fe-responsive]] (layout), [[fe-touch]] (mobile/tablet), [[fe-ui-states]] (loading/empty/error), [[fe-ui-foundations]] (spacing/tokens), [[fe-a11y]].
+
 ### Before you create one
 - Search first. The best new component is the one you didn't write — reuse or compose an existing one before building a new variant. Two near-identical components are a bug.
 - Reuse vs duplicate is a judgment, not a reflex: reuse when the data flow and props fit; if making the existing one fit means bending its API or threading flags through it, copy instead and let the two diverge.
@@ -24,6 +26,7 @@ Separate the two; it decides where the file lives and what it may import.
 - Function components only. No classes.
 - Keep the body flat — extract event handlers and derived values to named consts above the `return`, not inline in JSX.
 - Co-locate: component, its styles, and its component-specific hooks live in the same folder.
+- No hardcoded colors, spacing, or sizes — pull them from theme tokens / the scale so a restyle is one edit, not a sweep ([[fe-ui-foundations]]).
 
 ```tsx
 // ❌ config explosion
@@ -59,7 +62,7 @@ type Props =
 
 ### Lists & forms
 - `key` must be a stable id from the data — never the array index, never `Math.random()`.
-- Inputs: default to controlled (`value` + `onChange`). Reach for uncontrolled (`defaultValue`/refs) only for simple or perf-sensitive forms.
+- Inputs: default to controlled (`value` + `onChange`). Reach for uncontrolled (`defaultValue`/refs) only for simple or perf-sensitive forms. Real forms (validation, many fields) → [[fe-react-forms]].
 
 ### Server vs Client (RSC / Next.js App Router)
 - Default to Server Components. They ship zero JS, fetch data directly, and keep secrets server-side.
