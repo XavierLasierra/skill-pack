@@ -1,7 +1,7 @@
 ---
-applies_to: all
+targets: [all]
 ---
-## Conventional Commits — Active
+## Conventional Commits
 
 Always format commit messages as:
 

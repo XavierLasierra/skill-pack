@@ -1,7 +1,7 @@
 ---
-applies_to: all
+targets: [all]
 ---
-## Clean Code — Active
+## Clean Code
 
 ### Write
 - Names that explain intent — no abbreviations except universally understood ones: loop counters (i, j, k), counts (n), errors (err), context (ctx)

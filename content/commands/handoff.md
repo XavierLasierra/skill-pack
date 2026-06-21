@@ -1,3 +1,7 @@
+---
+targets: [all]
+description: Compact the current conversation into a handoff document for another session.
+---
 Compact the current conversation into a handoff document so another agent or session can continue the work.
 
 Focus for next session (if provided): $ARGUMENTS

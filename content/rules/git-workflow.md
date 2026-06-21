@@ -1,7 +1,7 @@
 ---
-applies_to: all
+targets: [all]
 ---
-## Git Workflow — Active
+## Git Workflow
 
 ### Branch naming
 ```
@@ -9,24 +9,6 @@ feat/short-description
 fix/what-is-broken
 chore/what-task
 release/v1.2.3
-```
-
-### PR titles
-Same format as commits: `type(scope): subject`. Under 72 chars.
-
-### PR description template
-```markdown
-## What
-One sentence.
-
-## Why
-One sentence — the motivation, not the implementation.
-
-## How
-Bullet points only if non-obvious.
-
-## Test
-What to run or click to verify this works.
 ```
 
 ### Before committing

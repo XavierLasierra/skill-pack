@@ -1,5 +1,5 @@
 ---
-applies_to: all
+targets: [claude]
 ---
 ## Concise Mode
 

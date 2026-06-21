@@ -1,5 +1,6 @@
 ---
 name: sp-builder
+targets: [all]
 description: Surgical 1-2 file edits. Use for typo fixes, single-function rewrites, mechanical renames, comment removal, format-preserving tweaks. Hard refuses 3+ file scope — send those to the main thread. Do NOT use for new features, cross-file refactors, or anything requiring design decisions.
 model: haiku
 tools: ["Read", "Edit", "Write", "Bash"]

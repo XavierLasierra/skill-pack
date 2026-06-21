@@ -1,3 +1,7 @@
+---
+targets: [claude]
+description: Switch the active concise mode level (lite/full/ultra/off).
+---
 Switch the active concise mode level.
 
 Level: $ARGUMENTS (valid: lite, full, ultra, off)

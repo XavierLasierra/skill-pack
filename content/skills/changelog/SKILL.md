@@ -1,7 +1,9 @@
 ---
-applies_to: all
+name: changelog
+description: Generate a changelog or annotated git release tag from commits since the last tag. Use when asked to tag a release, cut a version, or produce release notes.
+targets: [all]
 ---
-## Git Changelog Tag — Active
+## Git Changelog Tag
 
 When asked to tag a release or create a changelog, generate an annotated git tag whose message is a structured changelog derived from commits since the previous tag.
 

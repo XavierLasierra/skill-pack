@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# skill-pack installer
-# Detects installed AI coding tools and injects skills into their config.
-# Re-running syncs skills: updates changed, removes deleted, adds new.
+# skill-pack installer — Claude Code + Antigravity CLI
+# Single source of truth: content/{rules,skills,commands,agents,hooks}
+# Re-running syncs: updates changed, removes deleted, adds new.
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SKILLS_DIR="$REPO_DIR/skills"
+CONTENT_DIR="$REPO_DIR/content"
+PLUGIN_NAME="sp"
 MARKER_START="# >>> skill-pack:"
 MARKER_END="# <<< skill-pack:"
 
@@ -24,459 +25,303 @@ skip() { echo -e "${GRAY}–${NC} $1"; }
 # ------------------------------------------------------------------
 
 SELECTED_TOOLS=""
-SELECTED_SKILLS=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --tools)
-            SELECTED_TOOLS="$2"
-            shift 2
-            ;;
-        --skills)
-            SELECTED_SKILLS="$2"
-            shift 2
-            ;;
+        --tools) SELECTED_TOOLS="$2"; shift 2;;
         --help|-h)
-            echo "Usage: install.sh [--tools tool1,tool2] [--skills skill1,skill2]"
+            echo "Usage: install.sh [--tools claude,antigravity]"
             echo ""
-            echo "  --tools   comma-separated: claude,gemini,cursor,windsurf,copilot,cline,amp,kiro,roo"
-            echo "  --skills  comma-separated skill names, e.g. clean-code,concise (default: all)"
-            echo ""
-            echo "Examples:"
-            echo "  install.sh                              # detect tools, install all skills"
-            echo "  install.sh --tools claude,cursor        # force install to these tools only"
-            echo "  install.sh --skills concise,clean-code  # install only these skills"
+            echo "  --tools   comma-separated: claude,antigravity (default: auto-detect)"
             exit 0
             ;;
-        *)
-            warn "Unknown option: $1"
-            exit 1
-            ;;
+        *) warn "Unknown option: $1"; exit 1;;
     esac
 done
 
 # ------------------------------------------------------------------
-# Helpers
+# Frontmatter helpers
 # ------------------------------------------------------------------
 
-# Match by basename or full group-relative path (e.g. "clean-code" or "code-quality/clean-code")
-skill_selected() {
-    local skill_name="$1"
-    [[ -z "$SELECTED_SKILLS" ]] && return 0
-    local skill_base
-    skill_base="$(basename "$skill_name")"
-    local list
-    list="$(echo "$SELECTED_SKILLS" | tr ',' '\n')"
-    echo "$list" | grep -qx "$skill_name" && return 0
-    echo "$list" | grep -qx "$skill_base"
+# Print the body of a file (everything after the YAML frontmatter).
+# Frontmatter is recognised only when the file's first line is `---`, so a
+# markdown `---` rule inside the body is preserved.
+body() {
+    awk '
+        NR==1 && $0=="---" {infm=1; next}
+        infm && $0=="---"  {infm=0; next}
+        infm {next}
+        {print}
+    ' "$1"
 }
 
-# Return 0 (true) if the skill's applies_to includes the given tool.
-skill_applies_to() {
-    local skill_file="$1"
-    local tool="$2"
-
-    # No frontmatter → applies to all
-    if ! head -1 "$skill_file" | grep -q '^---$'; then
-        return 0
-    fi
-
-    local applies_line
-    applies_line="$(awk 'BEGIN{n=0} /^---$/{n++; if(n==2)exit} n==1 && /applies_to:/{print}' "$skill_file")"
-
-    # No applies_to field → applies to all
-    [[ -z "$applies_line" ]] && return 0
-
-    local applies_values
-    applies_values="$(echo "$applies_line" | sed 's/.*applies_to:[[:space:]]*//' | tr -d '[]' | tr ',' '\n' | tr -d ' ')"
-
-    echo "$applies_values" | grep -qx "all" && return 0
-    echo "$applies_values" | grep -qx "$tool"
+# Print a file with the given frontmatter keys removed (only inside frontmatter).
+strip_keys() {
+    local f="$1"; shift
+    local pat; pat="$(printf '%s\n' "$@" | paste -sd'|' -)"
+    awk -v p="^(${pat}):" 'BEGIN{n=0} /^---$/{n++; print; next} n==1 && $0 ~ p {next} {print}' "$f"
 }
 
-# Output skill file content with YAML frontmatter stripped.
-skill_content() {
-    local skill_file="$1"
-    if head -1 "$skill_file" | grep -q '^---$'; then
-        awk 'BEGIN{n=0; past=0} /^---$/{n++; if(n==2){past=1}; next} past{print}' "$skill_file"
-    else
-        cat "$skill_file"
-    fi
+# Read stdin and insert a line just after the opening `---`, marking the file as
+# skill-pack-managed so prune/uninstall can distinguish it from the user's own.
+add_marker() {
+    awk 'NR==1 && $0=="---"{print; print "skill-pack: true"; next} {print}'
 }
 
-# Iterate over all skill files, yielding skill_file and skill_name (group-relative path).
-# Usage: each_skill <callback> [extra args...]
-# Callback receives: skill_file skill_name [extra args...]
-each_skill() {
-    local callback="$1"
-    shift
-    while IFS= read -r skill_file; do
-        local skill_name="${skill_file#"$SKILLS_DIR/"}"
-        skill_name="${skill_name%.md}"
-        skill_selected "$skill_name" || continue
-        "$callback" "$skill_file" "$skill_name" "$@"
-    done < <(find "$SKILLS_DIR" -name "*.md" | sort)
+# Return 0 if the file's `targets` frontmatter includes the tool (or "all", or no targets).
+target_match() {
+    local f="$1" tool="$2"
+    local vals
+    vals="$(awk 'BEGIN{n=0} /^---$/{n++; if(n==2)exit} n==1 && /^targets:/{print}' "$f" \
+        | sed 's/.*targets:[[:space:]]*//' | tr -d '[]' | tr ',' '\n' | tr -d ' ')"
+    [[ -z "$vals" ]] && return 0
+    echo "$vals" | grep -Fqx "all" && return 0
+    echo "$vals" | grep -Fqx "$tool"
 }
 
 # ------------------------------------------------------------------
-# Core: remove / upsert / prune skill blocks in marker-based files
+# Marker-based rule blocks (CLAUDE.md / AGENTS.md)
 # ------------------------------------------------------------------
 
-# Remove a single skill block identified by key from a target file.
-# Guards against missing end marker to avoid eating the rest of the file.
-remove_skill_block() {
-    local target="$1"
-    local key="$2"
-    local start="${MARKER_START}${key}"
-    local end="${MARKER_END}${key}"
-
-    if ! grep -qF "$start" "$target" 2>/dev/null; then
-        return 0
-    fi
+remove_block() {
+    local target="$1" key="$2"
+    local start="${MARKER_START}${key}" end="${MARKER_END}${key}"
+    grep -qF "$start" "$target" 2>/dev/null || return 0
     if ! grep -qF "$end" "$target" 2>/dev/null; then
-        warn "Missing end marker for $key in $(basename "$target") — skipping removal"
+        warn "Missing end marker for $key in $(basename "$target") — skipping"
         return 1
     fi
-
-    local tmp
-    tmp="$(mktemp)"
-    awk -v start="$start" -v end="$end" '
-        $0 == start { skip=1; next }
-        skip && $0 == end { skip=0; next }
-        !skip { print }
-    ' "$target" > "$tmp"
-    mv "$tmp" "$target"
+    local tmp; tmp="$(mktemp)"
+    awk -v s="$start" -v e="$end" '$0==s{skip=1;next} skip&&$0==e{skip=0;next} !skip{print}' "$target" > "$tmp"
+    mv "$tmp" "$target" || { rm -f "$tmp"; return 1; }
 }
 
-# Remove skill blocks present in a file but no longer in the repo (or no longer
-# applying to the given tool). Skipped on partial --skills installs to avoid
-# removing skills the user didn't touch.
-prune_stale_skills() {
-    local tool="$1"
-    local target="$2"
-
-    [[ ! -f "$target" ]] && return 0
-    [[ -n "$SELECTED_SKILLS" ]] && return 0
-
-    while IFS= read -r key; do
-        local skill_file="$SKILLS_DIR/${key}.md"
-        if [[ ! -f "$skill_file" ]] || ! skill_applies_to "$skill_file" "$tool"; then
-            if remove_skill_block "$target" "$key"; then
-                log "Removed stale: $key → $(basename "$target")"
-            fi
-        fi
-    done < <(grep -F "$MARKER_START" "$target" 2>/dev/null | sed "s|.*${MARKER_START}||")
-}
-
-# Upsert a skill block into a target config file.
-append_skill() {
-    local skill_file="$1"
-    local skill_name="$2"
-    local tool="$3"
-    local target="$4"
-    local start="${MARKER_START}${skill_name}"
-    local end="${MARKER_END}${skill_name}"
-
-    if ! skill_applies_to "$skill_file" "$tool"; then
-        skip "Skipped (not for $tool): $skill_name"
-        return
-    fi
-
-    mkdir -p "$(dirname "$target")"
-    touch "$target"
-
+upsert_block() {
+    local target="$1" key="$2" file="$3"
+    local start="${MARKER_START}${key}" end="${MARKER_END}${key}"
+    mkdir -p "$(dirname "$target")"; touch "$target"
     local action="Installed"
-    if grep -qF "$start" "$target" 2>/dev/null; then
-        remove_skill_block "$target" "$skill_name"
-        action="Updated"
-    fi
+    grep -qF "$start" "$target" 2>/dev/null && { remove_block "$target" "$key"; action="Updated"; }
+    { echo ""; echo "$start"; body "$file"; echo ""; echo "$end"; } >> "$target"
+    log "$action: $key → $(basename "$target")"
+}
 
-    {
-        echo ""
-        echo "$start"
-        skill_content "$skill_file"
-        echo ""
-        echo "$end"
-    } >> "$target"
+# Remove rule blocks in the file whose source no longer exists or no longer targets the tool.
+prune_rules() {
+    local tool="$1" target="$2"
+    [[ -f "$target" ]] || return 0
+    while IFS= read -r key; do
+        local name="${key#rules/}"
+        local src="$CONTENT_DIR/rules/${name}.md"
+        if [[ ! -f "$src" ]] || ! target_match "$src" "$tool"; then
+            remove_block "$target" "$key" && log "Removed stale: $key → $(basename "$target")"
+        fi
+    done < <(grep -F "$MARKER_START" "$target" 2>/dev/null | sed "s|.*${MARKER_START}||" | grep '^rules/')
+}
 
-    log "$action: $skill_name → $(basename "$target")"
+install_rules() {
+    local tool="$1" target="$2"
+    prune_rules "$tool" "$target"
+    for f in "$CONTENT_DIR"/rules/*.md; do
+        [[ -f "$f" ]] || continue
+        local name; name="$(basename "$f" .md)"
+        if target_match "$f" "$tool"; then
+            upsert_block "$target" "rules/$name" "$f"
+        else
+            skip "Skipped (not for $tool): rules/$name"
+        fi
+    done
 }
 
 # ------------------------------------------------------------------
-# Per-tool installers
+# Directory sync (skills / agents / commands)
 # ------------------------------------------------------------------
 
-_do_append() { append_skill "$1" "$2" "$3" "$4"; }
+# Write $2 to file $1 only if changed; report action.
+write_if_changed() {
+    local dst="$1" label="$2"
+    local content; content="$(cat)"
+    if [[ -f "$dst" ]] && [[ "$(cat "$dst")" == "$content" ]]; then
+        skip "Already current: $label"
+    else
+        printf '%s\n' "$content" > "$dst"
+        log "Installed: $label"
+    fi
+}
+
+# ------------------------------------------------------------------
+# Claude Code
+# ------------------------------------------------------------------
 
 install_claude_hooks() {
-    local hook_src="$REPO_DIR/hooks"
+    local hook_src="$CONTENT_DIR/hooks"
     local hook_dst="$HOME/.skill-pack/hooks"
     local settings="$HOME/.claude/settings.json"
-
-    if ! command -v python3 &>/dev/null; then
-        warn "python3 not found — Claude Code hooks skipped"
-        return
-    fi
+    command -v python3 &>/dev/null || { warn "python3 not found — Claude hooks skipped"; return; }
 
     mkdir -p "$hook_dst"
     for hook in session-start user-prompt-submit statusline; do
-        cp "$hook_src/${hook}.sh" "$hook_dst/"
-        chmod +x "$hook_dst/${hook}.sh"
+        cp "$hook_src/${hook}.sh" "$hook_dst/"; chmod +x "$hook_dst/${hook}.sh"
         log "Installed: ${hook}.sh → $hook_dst"
     done
 
     python3 - "$hook_dst" "$settings" <<'PYEOF'
 import json, os, shlex, sys
-
 hook_dir, settings_path = sys.argv[1], sys.argv[2]
-
 try:
-    with open(settings_path) as f:
-        settings = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
-    settings = {}
-
+    with open(settings_path) as f: settings = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError): settings = {}
 hooks = settings.setdefault('hooks', {})
-
 to_register = [
     ('SessionStart',     None, f'bash {shlex.quote(hook_dir + "/session-start.sh")}'),
     ('UserPromptSubmit', '',   f'bash {shlex.quote(hook_dir + "/user-prompt-submit.sh")}'),
 ]
-
 for event, matcher, cmd in to_register:
     event_hooks = hooks.setdefault(event, [])
-    already = any(
-        any(h.get('command') == cmd for h in entry.get('hooks', []))
-        for entry in event_hooks
-    )
+    already = any(any(h.get('command') == cmd for h in e.get('hooks', [])) for e in event_hooks)
     if not already:
         entry = {'hooks': [{'type': 'command', 'command': cmd}]}
-        if matcher is not None:
-            entry['matcher'] = matcher
+        if matcher is not None: entry['matcher'] = matcher
         event_hooks.append(entry)
-        print(f'\033[0;32m✓\033[0m Registered: {event} → {cmd}')
+        print(f'\033[0;32m✓\033[0m Registered: {event}')
     else:
         print(f'\033[0;90m–\033[0m Already registered: {event}')
-
 statusline_cmd = f'bash {shlex.quote(hook_dir + "/statusline.sh")}'
 if settings.get('statusLine', {}).get('command') != statusline_cmd:
     settings['statusLine'] = {'type': 'command', 'command': statusline_cmd}
-    print(f'\033[0;32m✓\033[0m Registered: statusLine → {statusline_cmd}')
-else:
-    print(f'\033[0;90m–\033[0m Already registered: statusLine')
-
+    print(f'\033[0;32m✓\033[0m Registered: statusLine')
 os.makedirs(os.path.dirname(settings_path), exist_ok=True)
 with open(settings_path, 'w') as f:
-    json.dump(settings, f, indent=2)
-    f.write('\n')
+    json.dump(settings, f, indent=2); f.write('\n')
 PYEOF
 }
 
-install_claude_agents() {
-    local agents_src="$REPO_DIR/agents"
+# Remove skill-pack-managed skill dirs whose source no longer exists / no longer targets claude.
+prune_claude_skills() {
+    local base="$1"
+    [[ -d "$base" ]] || return 0
+    for d in "$base"/*/; do
+        [[ -d "$d" ]] || continue
+        local sf="${d}SKILL.md"
+        [[ -f "$sf" ]] && grep -qF "skill-pack: true" "$sf" 2>/dev/null || continue
+        local name; name="$(basename "$d")"
+        local src="$CONTENT_DIR/skills/$name/SKILL.md"
+        if [[ ! -f "$src" ]] || ! target_match "$src" "claude"; then
+            rm -rf "$d"; log "Removed stale: skills/$name"
+        fi
+    done
+}
+
+# Remove skill-pack-managed files in a dir whose source no longer exists / no longer targets claude.
+prune_claude_dir() {
+    local dst="$1" src_dir="$2" marker="$3"
+    [[ -d "$dst" ]] || return 0
+    for f in "$dst"/*.md; do
+        [[ -f "$f" ]] || continue
+        grep -qF "$marker" "$f" 2>/dev/null || continue
+        local name; name="$(basename "$f" .md)"
+        local src="$src_dir/${name}.md"
+        if [[ ! -f "$src" ]] || ! target_match "$src" "claude"; then
+            rm "$f"; log "Removed stale: $(basename "$f") → $(basename "$dst")"
+        fi
+    done
+}
+
+install_claude() {
+    echo ""; echo "▸ Claude Code"
+    install_rules "claude" "$HOME/.claude/CLAUDE.md"
+
+    # Skills → ~/.claude/skills/<name>/SKILL.md
+    local skills_dst="$HOME/.claude/skills"
+    mkdir -p "$skills_dst"
+    prune_claude_skills "$skills_dst"
+    for d in "$CONTENT_DIR"/skills/*/; do
+        [[ -d "$d" ]] || continue
+        local name; name="$(basename "$d")"
+        local src="$d/SKILL.md"
+        if ! target_match "$src" "claude"; then skip "Skipped (not for claude): skills/$name"; continue; fi
+        mkdir -p "$skills_dst/$name"
+        strip_keys "$src" targets | add_marker | write_if_changed "$skills_dst/$name/SKILL.md" "skills/$name"
+    done
+
+    # Agents → ~/.claude/agents/<name>.md  (keep Claude frontmatter; drop targets)
     local agents_dst="$HOME/.claude/agents"
-
-    [[ ! -d "$agents_src" ]] && return 0
-
-    # Prune stale agents (skill-pack managed, no longer in repo)
-    # Not gated on SELECTED_SKILLS — agents are independent of skill selection
-    if [[ -d "$agents_dst" ]]; then
-        for f in "$agents_dst"/*.md; do
-            [[ -f "$f" ]] || continue
-            if grep -qF "skill-pack: true" "$f" 2>/dev/null; then
-                local fname
-                fname="$(basename "$f")"
-                if [[ ! -f "$agents_src/$fname" ]]; then
-                    rm "$f"
-                    log "Removed stale agent: $f"
-                fi
-            fi
-        done
-    fi
-
     mkdir -p "$agents_dst"
-    for f in "$agents_src"/*.md; do
+    prune_claude_dir "$agents_dst" "$CONTENT_DIR/agents" "skill-pack: true"
+    for f in "$CONTENT_DIR"/agents/*.md; do
         [[ -f "$f" ]] || continue
-        local fname
-        fname="$(basename "$f")"
-        if [[ -f "$agents_dst/$fname" ]] && diff -q "$f" "$agents_dst/$fname" &>/dev/null; then
-            skip "Already installed: agent/$fname"
-        else
-            cp "$f" "$agents_dst/"
-            log "Installed agent: $fname → $agents_dst"
-        fi
+        local name; name="$(basename "$f" .md)"
+        target_match "$f" "claude" || { skip "Skipped (not for claude): agents/$name"; continue; }
+        strip_keys "$f" targets | write_if_changed "$agents_dst/$name.md" "agents/$name"
     done
-}
 
-install_claude_commands() {
-    local cmds_src="$REPO_DIR/commands"
+    # Commands → ~/.claude/commands/<name>.md
     local cmds_dst="$HOME/.claude/commands"
-
-    [[ ! -d "$cmds_src" ]] && return 0
-
     mkdir -p "$cmds_dst"
-    for f in "$cmds_src"/*.md; do
+    prune_claude_dir "$cmds_dst" "$CONTENT_DIR/commands" "skill-pack: true"
+    for f in "$CONTENT_DIR"/commands/*.md; do
         [[ -f "$f" ]] || continue
-        local fname
-        fname="$(basename "$f")"
-        if [[ -f "$cmds_dst/$fname" ]] && diff -q "$f" "$cmds_dst/$fname" &>/dev/null; then
-            skip "Already installed: command/$fname"
-        else
-            cp "$f" "$cmds_dst/"
-            log "Installed command: $fname → $cmds_dst"
-        fi
+        local name; name="$(basename "$f" .md)"
+        target_match "$f" "claude" || { skip "Skipped (not for claude): commands/$name"; continue; }
+        strip_keys "$f" targets | add_marker | write_if_changed "$cmds_dst/$name.md" "commands/$name"
     done
-}
 
-install_claude_code() {
-    local target="$HOME/.claude/CLAUDE.md"
-    echo ""
-    echo "▸ Claude Code"
-    prune_stale_skills "claude" "$target"
-    each_skill _do_append "claude" "$target"
     install_claude_hooks
-    install_claude_agents
-    install_claude_commands
 }
 
-install_gemini_cli() {
-    local target="$HOME/.gemini/GEMINI.md"
-    echo ""
-    echo "▸ Gemini CLI"
-    prune_stale_skills "gemini" "$target"
-    each_skill _do_append "gemini" "$target"
-}
+# ------------------------------------------------------------------
+# Antigravity CLI (agy)
+# ------------------------------------------------------------------
 
-_do_cursor() {
-    local skill_file="$1" skill_name="$2" rules_dir="$3"
-    if ! skill_applies_to "$skill_file" "cursor"; then
-        skip "Skipped (not for cursor): $skill_name"
+install_antigravity() {
+    echo ""; echo "▸ Antigravity CLI (agy)"
+    install_rules "antigravity" "$HOME/.gemini/AGENTS.md"
+
+    # Build a native agy plugin from content/, then register it with `agy plugin install`.
+    local stage="$HOME/.skill-pack/antigravity/$PLUGIN_NAME"
+    rm -rf "$stage"; mkdir -p "$stage/skills" "$stage/agents" "$stage/commands"
+    printf '{"name":"%s","description":"skill-pack behavioral skills","disabled":false}\n' "$PLUGIN_NAME" > "$stage/plugin.json"
+
+    local count=0
+    for d in "$CONTENT_DIR"/skills/*/; do
+        [[ -d "$d" ]] || continue
+        local name; name="$(basename "$d")"
+        target_match "$d/SKILL.md" "antigravity" || continue
+        mkdir -p "$stage/skills/$name"
+        strip_keys "$d/SKILL.md" targets > "$stage/skills/$name/SKILL.md"
+        count=$((count+1))
+    done
+    for f in "$CONTENT_DIR"/agents/*.md; do
+        [[ -f "$f" ]] || continue
+        local name; name="$(basename "$f" .md)"
+        target_match "$f" "antigravity" || continue
+        strip_keys "$f" targets model tools skill-pack > "$stage/agents/$name.md"
+        count=$((count+1))
+    done
+    for f in "$CONTENT_DIR"/commands/*.md; do
+        [[ -f "$f" ]] || continue
+        local name; name="$(basename "$f" .md)"
+        target_match "$f" "antigravity" || continue
+        strip_keys "$f" targets > "$stage/commands/$name.md"
+        count=$((count+1))
+    done
+    rmdir "$stage/skills" "$stage/agents" "$stage/commands" 2>/dev/null || true
+
+    if ! command -v agy &>/dev/null; then
+        warn "agy not on PATH — plugin staged at $stage. Run: agy plugin install $stage"
         return
     fi
-    local target="$rules_dir/${skill_name//\//-}.mdc"
-    {
-        echo "---"
-        echo "description: skill-pack/${skill_name}"
-        echo "alwaysApply: true"
-        echo "---"
-        skill_content "$skill_file"
-    } > "$target"
-    log "Installed: $skill_name → $target"
-}
-
-prune_cursor_rules() {
-    local rules_dir="$1"
-    [[ ! -d "$rules_dir" ]] && return 0
-    [[ -n "$SELECTED_SKILLS" ]] && return 0
-
-    for f in "$rules_dir"/*.mdc; do
-        [[ -f "$f" ]] || continue
-        if grep -qF "skill-pack/" "$f" 2>/dev/null; then
-            local skill_name
-            skill_name="$(grep 'description: skill-pack/' "$f" | sed 's|.*description: skill-pack/||' | tr -d '[:space:]')"
-            local skill_file="$SKILLS_DIR/${skill_name}.md"
-            if [[ ! -f "$skill_file" ]] || ! skill_applies_to "$skill_file" "cursor"; then
-                rm "$f"
-                log "Removed stale: $f"
-            fi
-        fi
-    done
-}
-
-install_cursor() {
-    local rules_dir="$HOME/.cursor/rules"
-    mkdir -p "$rules_dir"
-    echo ""
-    echo "▸ Cursor"
-    prune_cursor_rules "$rules_dir"
-    each_skill _do_cursor "$rules_dir"
-}
-
-install_windsurf() {
-    local target="$HOME/.windsurfrules"
-    echo ""
-    echo "▸ Windsurf"
-    prune_stale_skills "windsurf" "$target"
-    each_skill _do_append "windsurf" "$target"
-}
-
-install_copilot() {
-    local target="$REPO_DIR/.github/copilot-instructions.md"
-    mkdir -p "$REPO_DIR/.github"
-    echo ""
-    echo "▸ GitHub Copilot (template — copy .github/copilot-instructions.md to each project)"
-    prune_stale_skills "copilot" "$target"
-    each_skill _do_append "copilot" "$target"
-}
-
-install_cline() {
-    local target="$REPO_DIR/.clinerules"
-    echo ""
-    echo "▸ Cline (template — copy .clinerules to each project)"
-    prune_stale_skills "cline" "$target"
-    each_skill _do_append "cline" "$target"
-}
-
-install_amp() {
-    local target="$REPO_DIR/AGENTS.md"
-    echo ""
-    echo "▸ Amp / Sourcegraph (template — copy AGENTS.md to each project root)"
-    prune_stale_skills "amp" "$target"
-    each_skill _do_append "amp" "$target"
-}
-
-_do_kiro() {
-    local skill_file="$1" skill_name="$2" kiro_dir="$3"
-    if ! skill_applies_to "$skill_file" "kiro"; then
-        skip "Skipped (not for kiro): $skill_name"
+    local vout
+    if ! vout="$(agy plugin validate "$stage" 2>&1)"; then
+        warn "Plugin failed validation: $(echo "$vout" | tail -1)"
         return
     fi
-    local target="$kiro_dir/${skill_name//\//-}.md"
-    { echo "<!-- skill-pack -->"; skill_content "$skill_file"; } > "$target"
-    log "Installed: $skill_name → $target"
-}
-
-prune_kiro_steering() {
-    local kiro_dir="$1"
-    [[ ! -d "$kiro_dir" ]] && return 0
-    [[ -n "$SELECTED_SKILLS" ]] && return 0
-
-    for f in "$kiro_dir"/*.md; do
-        [[ -f "$f" ]] || continue
-        grep -qF "<!-- skill-pack -->" "$f" 2>/dev/null || continue
-        local fname
-        fname="$(basename "$f")"
-        local found=0
-        while IFS= read -r skill_file; do
-            local skill_name="${skill_file#"$SKILLS_DIR/"}"
-            skill_name="${skill_name%.md}"
-            if skill_applies_to "$skill_file" "kiro" && [[ "${skill_name//\//-}.md" == "$fname" ]]; then
-                found=1
-                break
-            fi
-        done < <(find "$SKILLS_DIR" -name "*.md" | sort)
-        if [[ $found -eq 0 ]]; then
-            rm "$f"
-            log "Removed stale: $f"
-        fi
-    done
-}
-
-install_kiro() {
-    local kiro_dir="$REPO_DIR/.kiro/steering"
-    mkdir -p "$kiro_dir"
-    echo ""
-    echo "▸ Kiro / AWS (template — copy .kiro/ to each project root)"
-    prune_kiro_steering "$kiro_dir"
-    each_skill _do_kiro "$kiro_dir"
-}
-
-install_roo() {
-    local target="$REPO_DIR/.roorules"
-    echo ""
-    echo "▸ Roo Code (template — copy .roorules to each project root)"
-    prune_stale_skills "roo" "$target"
-    each_skill _do_append "roo" "$target"
+    agy plugin uninstall "$PLUGIN_NAME" >/dev/null 2>&1 || true
+    if agy plugin install "$stage" >/dev/null 2>&1; then
+        log "Installed plugin '$PLUGIN_NAME' ($count components) via agy"
+    else
+        warn "agy plugin install failed — plugin staged at $stage. Run: agy plugin install $stage"
+    fi
 }
 
 # ------------------------------------------------------------------
@@ -485,64 +330,27 @@ install_roo() {
 
 detect_and_install() {
     local installed=0
-
-    if [[ -n "$SELECTED_TOOLS" ]]; then
-        echo ""
-        echo "Target tools: $SELECTED_TOOLS"
-        for tool in $(echo "$SELECTED_TOOLS" | tr ',' '\n'); do
-            case "$tool" in
-                claude)   install_claude_code;  installed=$((installed + 1));;
-                gemini)   install_gemini_cli;   installed=$((installed + 1));;
-                cursor)   install_cursor;       installed=$((installed + 1));;
-                windsurf) install_windsurf;     installed=$((installed + 1));;
-                copilot)  install_copilot; installed=$((installed + 1));;
-                cline)    install_cline;   installed=$((installed + 1));;
-                amp)      install_amp;     installed=$((installed + 1));;
-                kiro)     install_kiro;    installed=$((installed + 1));;
-                roo)      install_roo;     installed=$((installed + 1));;
-                *)        warn "Unknown tool: $tool";;
-            esac
-        done
-    else
-        # Auto-detect global tools
+    local tools="$SELECTED_TOOLS"
+    if [[ -z "$tools" ]]; then
         if command -v claude &>/dev/null || [[ -d "$HOME/.claude" ]]; then
-            install_claude_code; installed=$((installed + 1))
-        else
-            skip "Claude Code not found"
+            tools="claude"
         fi
-
-        if command -v gemini &>/dev/null || [[ -d "$HOME/.gemini" ]]; then
-            install_gemini_cli; installed=$((installed + 1))
-        else
-            skip "Gemini CLI not found"
+        if command -v agy &>/dev/null || [[ -d "$HOME/.gemini/antigravity-cli" ]]; then
+            tools="${tools:+$tools,}antigravity"
         fi
-
-        if command -v cursor &>/dev/null || [[ -d "$HOME/.cursor" ]] || [[ -d "/Applications/Cursor.app" ]]; then
-            install_cursor; installed=$((installed + 1))
-        else
-            skip "Cursor not found"
-        fi
-
-        if command -v windsurf &>/dev/null || [[ -f "$HOME/.windsurfrules" ]] || [[ -d "/Applications/Windsurf.app" ]]; then
-            install_windsurf; installed=$((installed + 1))
-        else
-            skip "Windsurf not found"
-        fi
-
-        # Always regenerate project-level templates
-        install_copilot;  installed=$((installed + 1))
-        install_cline;    installed=$((installed + 1))
-        install_amp;      installed=$((installed + 1))
-        install_kiro;     installed=$((installed + 1))
-        install_roo;      installed=$((installed + 1))
     fi
 
+    [[ -z "$tools" ]] && { warn "No supported tools detected (claude, antigravity)."; return; }
+    echo ""; echo "Target tools: $tools"
+    for tool in $(echo "$tools" | tr ',' '\n'); do
+        case "$tool" in
+            claude)      install_claude;       installed=$((installed+1));;
+            antigravity) install_antigravity;  installed=$((installed+1));;
+            *)           warn "Unknown tool: $tool";;
+        esac
+    done
     echo ""
-    if [[ $installed -eq 0 ]] && [[ -z "$SELECTED_TOOLS" ]]; then
-        warn "No AI CLI tools detected. Templates written to repo — copy manually."
-    else
-        log "Done. Re-run to sync skills. bash uninstall.sh to remove."
-    fi
+    [[ $installed -gt 0 ]] && log "Done. Re-run to sync. bash uninstall.sh to remove."
 }
 
 echo "skill-pack installer"

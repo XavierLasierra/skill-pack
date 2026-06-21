@@ -1,7 +1,9 @@
 ---
-applies_to: all
+name: code-review
+description: Review a diff, PR, branch, or files for bugs, risks, and quality issues. Use when asked to review code, audit a file, or check a PR. One finding per line with location, problem, and fix.
+targets: [all]
 ---
-## Code Review — Active
+## Code Review
 
 When asked to review code:
 

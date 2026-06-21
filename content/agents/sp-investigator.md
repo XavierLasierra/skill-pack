@@ -1,5 +1,6 @@
 ---
 name: sp-investigator
+targets: [all]
 description: Read-only code locator. Use when you need to find where something is defined, what calls a function, list all uses of a symbol, or map a directory. Returns file:line references only — never suggests fixes. Best for "where is X defined", "what calls Y", "list all uses of Z", "map this directory". Do NOT use for code review, design questions, or open-ended analysis.
 model: haiku
 tools: ["Read", "Grep", "Glob", "Bash"]

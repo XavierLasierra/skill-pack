@@ -1,5 +1,6 @@
 ---
 name: sp-reviewer
+targets: [all]
 description: Code reviewer. Use when asked to review a diff, PR, branch, or specific files for bugs, risks, and quality issues. Returns one finding per line with location, problem, and fix. Use for "review this PR", "review my diff", "audit this file". Skips formatting nits unless they change meaning. Do NOT use for finding where code is (use investigator) or making edits (use builder or main thread).
 model: sonnet
 tools: ["Read", "Grep", "Bash"]

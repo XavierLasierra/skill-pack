@@ -1,5 +1,5 @@
 ---
-applies_to: claude
+targets: [claude]
 ---
 ## Model Usage — Cost & Speed
 
