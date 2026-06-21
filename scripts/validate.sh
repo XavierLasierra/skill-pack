@@ -14,12 +14,12 @@ check_targets() {
   local file="$1" line vals v
   line=$(frontmatter "$file" | grep -E '^targets:' || true)
   if [ -z "$line" ]; then err "$file: missing 'targets'"; return; fi
-  vals=$(echo "$line" | sed -E 's/.*\[(.*)\].*/\1/' | tr ',' '\n' | tr -d '[:space:]')
+  vals=$(echo "$line" | sed -E 's/.*\[(.*)\].*/\1/' | tr ',' '\n' | tr -d '[:blank:]')
   while IFS= read -r v; do
     [ -z "$v" ] && continue
     case "$v" in
-      all|claude|antigravity) ;;
-      *) err "$file: invalid target '$v' (allowed: all, claude, antigravity)" ;;
+      all|claude|antigravity|opencode) ;;
+      *) err "$file: invalid target '$v' (allowed: all, claude, antigravity, opencode)" ;;
     esac
   done <<< "$vals"
 }

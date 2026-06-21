@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skill-pack installer — Claude Code + Antigravity CLI
+# skill-pack installer — Claude Code + Antigravity CLI + opencode
 # Single source of truth: content/{rules,skills,commands,agents,hooks}
 # Re-running syncs: updates changed, removes deleted, adds new.
 
@@ -30,9 +30,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --tools) SELECTED_TOOLS="$2"; shift 2;;
         --help|-h)
-            echo "Usage: install.sh [--tools claude,antigravity]"
+            echo "Usage: install.sh [--tools claude,antigravity,opencode]"
             echo ""
-            echo "  --tools   comma-separated: claude,antigravity (default: auto-detect)"
+            echo "  --tools   comma-separated: claude,antigravity,opencode (default: auto-detect)"
             exit 0
             ;;
         *) warn "Unknown option: $1"; exit 1;;
@@ -66,6 +66,12 @@ strip_keys() {
 # skill-pack-managed so prune/uninstall can distinguish it from the user's own.
 add_marker() {
     awk 'NR==1 && $0=="---"{print; print "skill-pack: true"; next} {print}'
+}
+
+# Read stdin and insert an arbitrary line just after the opening `---` frontmatter
+# delimiter. Used to inject tool-specific keys (e.g. opencode's `mode: subagent`).
+add_fm_line() {
+    awk -v line="$1" 'NR==1 && $0=="---"{print; print line; next} {print}'
 }
 
 # Return 0 if the file's `targets` frontmatter includes the tool (or "all", or no targets).
@@ -196,9 +202,9 @@ with open(settings_path, 'w') as f:
 PYEOF
 }
 
-# Remove skill-pack-managed skill dirs whose source no longer exists / no longer targets claude.
-prune_claude_skills() {
-    local base="$1"
+# Remove skill-pack-managed skill dirs whose source no longer exists / no longer targets the tool.
+prune_skill_dir() {
+    local tool="$1" base="$2"
     [[ -d "$base" ]] || return 0
     for d in "$base"/*/; do
         [[ -d "$d" ]] || continue
@@ -206,22 +212,22 @@ prune_claude_skills() {
         [[ -f "$sf" ]] && grep -qF "skill-pack: true" "$sf" 2>/dev/null || continue
         local name; name="$(basename "$d")"
         local src="$CONTENT_DIR/skills/$name/SKILL.md"
-        if [[ ! -f "$src" ]] || ! target_match "$src" "claude"; then
+        if [[ ! -f "$src" ]] || ! target_match "$src" "$tool"; then
             rm -rf "$d"; log "Removed stale: skills/$name"
         fi
     done
 }
 
-# Remove skill-pack-managed files in a dir whose source no longer exists / no longer targets claude.
-prune_claude_dir() {
-    local dst="$1" src_dir="$2" marker="$3"
+# Remove skill-pack-managed files in a dir whose source no longer exists / no longer targets the tool.
+prune_md_dir() {
+    local tool="$1" dst="$2" src_dir="$3" marker="$4"
     [[ -d "$dst" ]] || return 0
     for f in "$dst"/*.md; do
         [[ -f "$f" ]] || continue
         grep -qF "$marker" "$f" 2>/dev/null || continue
         local name; name="$(basename "$f" .md)"
         local src="$src_dir/${name}.md"
-        if [[ ! -f "$src" ]] || ! target_match "$src" "claude"; then
+        if [[ ! -f "$src" ]] || ! target_match "$src" "$tool"; then
             rm "$f"; log "Removed stale: $(basename "$f") → $(basename "$dst")"
         fi
     done
@@ -234,7 +240,7 @@ install_claude() {
     # Skills → ~/.claude/skills/<name>/SKILL.md
     local skills_dst="$HOME/.claude/skills"
     mkdir -p "$skills_dst"
-    prune_claude_skills "$skills_dst"
+    prune_skill_dir "claude" "$skills_dst"
     for d in "$CONTENT_DIR"/skills/*/; do
         [[ -d "$d" ]] || continue
         local name; name="$(basename "$d")"
@@ -247,7 +253,7 @@ install_claude() {
     # Agents → ~/.claude/agents/<name>.md  (keep Claude frontmatter; drop targets)
     local agents_dst="$HOME/.claude/agents"
     mkdir -p "$agents_dst"
-    prune_claude_dir "$agents_dst" "$CONTENT_DIR/agents" "skill-pack: true"
+    prune_md_dir "claude" "$agents_dst" "$CONTENT_DIR/agents" "skill-pack: true"
     for f in "$CONTENT_DIR"/agents/*.md; do
         [[ -f "$f" ]] || continue
         local name; name="$(basename "$f" .md)"
@@ -258,7 +264,7 @@ install_claude() {
     # Commands → ~/.claude/commands/<name>.md
     local cmds_dst="$HOME/.claude/commands"
     mkdir -p "$cmds_dst"
-    prune_claude_dir "$cmds_dst" "$CONTENT_DIR/commands" "skill-pack: true"
+    prune_md_dir "claude" "$cmds_dst" "$CONTENT_DIR/commands" "skill-pack: true"
     for f in "$CONTENT_DIR"/commands/*.md; do
         [[ -f "$f" ]] || continue
         local name; name="$(basename "$f" .md)"
@@ -325,6 +331,54 @@ install_antigravity() {
 }
 
 # ------------------------------------------------------------------
+# opencode
+# ------------------------------------------------------------------
+
+install_opencode() {
+    echo ""; echo "▸ opencode"
+    local base="$HOME/.config/opencode"
+    install_rules "opencode" "$base/AGENTS.md"
+
+    # Skills → ~/.config/opencode/skills/<name>/SKILL.md
+    local skills_dst="$base/skills"
+    mkdir -p "$skills_dst"
+    prune_skill_dir "opencode" "$skills_dst"
+    for d in "$CONTENT_DIR"/skills/*/; do
+        [[ -d "$d" ]] || continue
+        local name; name="$(basename "$d")"
+        local src="$d/SKILL.md"
+        if ! target_match "$src" "opencode"; then skip "Skipped (not for opencode): skills/$name"; continue; fi
+        mkdir -p "$skills_dst/$name"
+        strip_keys "$src" targets | add_marker | write_if_changed "$skills_dst/$name/SKILL.md" "skills/$name"
+    done
+
+    # Agents → ~/.config/opencode/agents/<name>.md
+    # opencode frontmatter differs: it derives the name from the filename and uses
+    # `mode: subagent`. Drop Claude-only keys (name/tools/model) and inject mode.
+    local agents_dst="$base/agents"
+    mkdir -p "$agents_dst"
+    prune_md_dir "opencode" "$agents_dst" "$CONTENT_DIR/agents" "skill-pack: true"
+    for f in "$CONTENT_DIR"/agents/*.md; do
+        [[ -f "$f" ]] || continue
+        local name; name="$(basename "$f" .md)"
+        target_match "$f" "opencode" || { skip "Skipped (not for opencode): agents/$name"; continue; }
+        strip_keys "$f" targets name tools model | add_fm_line "mode: subagent" \
+            | write_if_changed "$agents_dst/$name.md" "agents/$name"
+    done
+
+    # Commands → ~/.config/opencode/commands/<name>.md
+    local cmds_dst="$base/commands"
+    mkdir -p "$cmds_dst"
+    prune_md_dir "opencode" "$cmds_dst" "$CONTENT_DIR/commands" "skill-pack: true"
+    for f in "$CONTENT_DIR"/commands/*.md; do
+        [[ -f "$f" ]] || continue
+        local name; name="$(basename "$f" .md)"
+        target_match "$f" "opencode" || { skip "Skipped (not for opencode): commands/$name"; continue; }
+        strip_keys "$f" targets | add_marker | write_if_changed "$cmds_dst/$name.md" "commands/$name"
+    done
+}
+
+# ------------------------------------------------------------------
 # Detection + dispatch
 # ------------------------------------------------------------------
 
@@ -338,14 +392,18 @@ detect_and_install() {
         if command -v agy &>/dev/null || [[ -d "$HOME/.gemini/antigravity-cli" ]]; then
             tools="${tools:+$tools,}antigravity"
         fi
+        if command -v opencode &>/dev/null || [[ -d "$HOME/.config/opencode" ]]; then
+            tools="${tools:+$tools,}opencode"
+        fi
     fi
 
-    [[ -z "$tools" ]] && { warn "No supported tools detected (claude, antigravity)."; return; }
+    [[ -z "$tools" ]] && { warn "No supported tools detected (claude, antigravity, opencode)."; return; }
     echo ""; echo "Target tools: $tools"
     for tool in $(echo "$tools" | tr ',' '\n'); do
         case "$tool" in
             claude)      install_claude;       installed=$((installed+1));;
             antigravity) install_antigravity;  installed=$((installed+1));;
+            opencode)    install_opencode;     installed=$((installed+1));;
             *)           warn "Unknown tool: $tool";;
         esac
     done

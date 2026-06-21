@@ -4,7 +4,7 @@ Guide for adding or changing content in this repo. Read before creating a new ru
 
 ## What this repo is
 
-One source of truth — `content/` — installed natively into **Claude Code** and the **Antigravity CLI (`agy`)** by `install.sh`. No copies, no drift. Each piece is emitted into the home each tool expects (rules → global context file, skills → native `SKILL.md`, etc.).
+One source of truth — `content/` — installed natively into **Claude Code**, the **Antigravity CLI (`agy`)**, and **opencode** by `install.sh`. No copies, no drift. Each piece is emitted into the home each tool expects (rules → global context file, skills → native `SKILL.md`, etc.).
 
 ## Layout (do not change the top level)
 
@@ -45,16 +45,18 @@ Every file carries `targets` controlling which tools receive it:
 
 ```yaml
 ---
-targets: [all]          # both tools (also the default if the key is omitted)
-targets: [claude]       # Claude only
-targets: [antigravity]  # Antigravity only
+targets: [all]                       # all tools (also the default if the key is omitted)
+targets: [claude]                    # Claude only
+targets: [antigravity]               # Antigravity only
+targets: [opencode]                  # opencode only
+targets: [antigravity, opencode]     # multiple — comma-separated
 ---
 ```
 
-Valid values: `all`, `claude`, `antigravity`. Validation rejects anything else.
+Valid values: `all`, `claude`, `antigravity`, `opencode`. Validation rejects anything else.
 
-- **Skills** (`SKILL.md`) additionally require `name` and `description`. **`name` must equal the directory name** (including prefix) — both tools trigger-match on it.
-- **Agents** require `name` and `description`; may keep Claude-only `model`/`tools` keys (the Antigravity build strips them).
+- **Skills** (`SKILL.md`) additionally require `name` and `description`. **`name` must equal the directory name** (including prefix) — all tools trigger-match on it.
+- **Agents** require `name` and `description`; may keep Claude-only `model`/`tools` keys (the Antigravity and opencode builds strip them; opencode also gets `mode: subagent` injected).
 - **Commands** require `description`.
 - **Rules** need only `targets`.
 

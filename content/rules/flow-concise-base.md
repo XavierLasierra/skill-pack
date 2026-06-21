@@ -1,5 +1,5 @@
 ---
-targets: [antigravity]
+targets: [antigravity, opencode]
 ---
 
 ## Concise

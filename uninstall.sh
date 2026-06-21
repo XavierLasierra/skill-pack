@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skill-pack uninstaller — Claude Code + Antigravity CLI
+# skill-pack uninstaller — Claude Code + Antigravity CLI + opencode
 
 set -euo pipefail
 
@@ -107,9 +107,34 @@ uninstall_antigravity() {
     rmdir "$HOME/.skill-pack" 2>/dev/null || true
 }
 
+uninstall_opencode() {
+    echo ""; echo "▸ opencode"
+    local base="$HOME/.config/opencode"
+    clean_blocks "$base/AGENTS.md"
+
+    if [[ -d "$base/skills" ]]; then
+        for d in "$base/skills"/*/; do
+            [[ -d "$d" ]] || continue
+            [[ -f "${d}SKILL.md" ]] && grep -qF "skill-pack: true" "${d}SKILL.md" 2>/dev/null || continue
+            rm -rf "$d"; log "Removed: skills/$(basename "$d")"
+        done
+        rmdir "$base/skills" 2>/dev/null || true
+    fi
+
+    for sub in agents commands; do
+        [[ -d "$base/$sub" ]] || continue
+        for f in "$base/$sub"/*.md; do
+            [[ -f "$f" ]] || continue
+            grep -qF "skill-pack: true" "$f" 2>/dev/null && { rm "$f"; log "Removed: $sub/$(basename "$f" .md)"; }
+        done
+        rmdir "$base/$sub" 2>/dev/null || true
+    done
+}
+
 echo "skill-pack uninstaller"
 echo "======================"
 uninstall_claude
 uninstall_antigravity
+uninstall_opencode
 echo ""
 log "Done. Restart Claude Code / agy."
