@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+
+bash "$ROOT/scripts/validate.sh"
+
+if command -v shellcheck >/dev/null 2>&1; then
+  echo "Running shellcheck…"
+  sh_files=()
+  while IFS= read -r f; do sh_files+=("$f"); done < <(find "$ROOT" -name '*.sh' -not -path '*/.git/*')
+  sh_files+=("$ROOT/.githooks/pre-commit")
+  shellcheck "${sh_files[@]}"
+else
+  echo "shellcheck not installed — skipping (brew install shellcheck)"
+fi

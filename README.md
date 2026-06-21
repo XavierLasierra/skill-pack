@@ -35,6 +35,8 @@ bash uninstall.sh                      # remove everything it added
 | **rule** | `concise` (full spec, switchable) | ✅ | — |
 | **rule** | `concise-base` (always-on, static) | — | ✅ |
 | **skill** | `code-review` | ✅ | ✅ |
+| **skill** | `simplify-review` (over-engineering only) | ✅ | ✅ |
+| **skill** | `simplify-debt` (shortcut ledger) | ✅ | ✅ |
 | **skill** | `changelog` | ✅ | ✅ |
 | **skill** | `pull-request` | ✅ | ✅ |
 | **command** | `/handoff` | ✅ | ✅ |
@@ -137,3 +139,15 @@ Skills additionally require `name` and `description` (both tools trigger-match o
   Re-running syncs: **Updated** (content changed), **Removed stale** (deleted or no longer targets the tool), **Installed** (new).
 - **Skills / agents / commands** are written into each tool's native directory (Antigravity via its plugin). They sync by content diff.
 - No API key, no network, no server — just files each tool already reads.
+
+---
+
+## Contributing
+
+Enable the pre-commit hook once per clone (native git, no dependencies):
+
+```bash
+git config core.hooksPath .githooks
+```
+
+On every commit it runs `scripts/validate.sh` — checks each `content/` item has the required frontmatter (`name`, `description`, valid `targets`) and that the README pack table is in sync — plus `shellcheck` on the shell scripts if installed (`brew install shellcheck`). Run it any time with `bash scripts/validate.sh`.
