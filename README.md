@@ -26,7 +26,7 @@ bash uninstall.sh                      # remove everything it added
 
 ## What's in the pack
 
-Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (code quality), **`git-`** (version control & release), **`flow-`** (workflow & meta). Agents use the **`sp-`** namespace; hooks keep fixed names.
+Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (code quality), **`git-`** (version control & release), **`flow-`** (workflow & meta), **`fe-`** (frontend). Agents use the **`sp-`** namespace; hooks keep fixed names.
 
 | Type | Item | Claude | Antigravity |
 |---|---|:--:|:--:|
@@ -47,6 +47,15 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `pm-roadmap` (Now/Next/Later) | ✅ | ✅ |
 | **skill** | `pm-backlog` (epics → stories) | ✅ | ✅ |
 | **skill** | `pm-work-ticket` (tracker-agnostic ticket) | ✅ | ✅ |
+| **skill** | `fe-react-component` (clean React components) | ✅ | ✅ |
+| **skill** | `fe-react-effects` (state/effect discipline) | ✅ | ✅ |
+| **skill** | `fe-react-native-component` (RN-specific deltas) | ✅ | ✅ |
+| **skill** | `fe-react-data-fetching` (TanStack Query / server state) | ✅ | ✅ |
+| **skill** | `fe-react-testing` (React Testing Library) | ✅ | ✅ |
+| **skill** | `fe-a11y` (accessibility, web + RN) | ✅ | ✅ |
+| **skill** | `fe-react-performance` (measure-first debugging) | ✅ | ✅ |
+| **skill** | `fe-react-state-management` (state decision guide) | ✅ | ✅ |
+| **skill** | `fe-react-forms` (React Hook Form + zod) | ✅ | ✅ |
 | **command** | `/flow-handoff` | ✅ | ✅ |
 | **command** | `/flow-concise` | ✅ | — |
 | **agent** | `sp-reviewer`, `sp-investigator`, `sp-builder` | ✅ | ✅ |
