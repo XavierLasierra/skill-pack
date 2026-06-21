@@ -39,6 +39,11 @@ bash uninstall.sh                      # remove everything it added
 | **skill** | `simplify-debt` (shortcut ledger) | ✅ | ✅ |
 | **skill** | `changelog` | ✅ | ✅ |
 | **skill** | `pull-request` | ✅ | ✅ |
+| **skill** | `product-brief` (kickoff one-pager) | ✅ | ✅ |
+| **skill** | `product-spec` (PRD) | ✅ | ✅ |
+| **skill** | `roadmap` (Now/Next/Later) | ✅ | ✅ |
+| **skill** | `backlog` (epics → stories) | ✅ | ✅ |
+| **skill** | `work-ticket` (tracker-agnostic ticket) | ✅ | ✅ |
 | **command** | `/handoff` | ✅ | ✅ |
 | **command** | `/concise` | ✅ | — |
 | **agent** | `sp-reviewer`, `sp-investigator`, `sp-builder` | ✅ | ✅ |
