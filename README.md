@@ -33,7 +33,8 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **rule** | `cq-clean-code` | ✅ | ✅ |
 | **rule** | `git-conventional-commits` | ✅ | ✅ |
 | **rule** | `git-workflow` | ✅ | ✅ |
-| **rule** | `flow-model-usage` (Claude model tiers) | ✅ | — |
+| **rule** | `flow-model-usage-claude` (Claude model tiers) | ✅ | — |
+| **rule** | `flow-model-usage-agy` (agy model-fit warning) | — | ✅ |
 | **rule** | `flow-concise` (full spec, switchable) | ✅ | — |
 | **rule** | `flow-concise-base` (always-on, static) | — | ✅ |
 | **skill** | `cq-code-review` | ✅ | ✅ |
@@ -73,7 +74,19 @@ On Antigravity everything except rules is packaged as a native plugin named **`s
 ### Tool-specific items
 
 - **`flow-concise` vs `flow-concise-base`** — both tools are concise by default. Claude gets the full `flow-concise` rule (lite/full/ultra levels + examples) plus live switching via `/flow-concise` and a per-turn reinjection hook. Antigravity gets `flow-concise-base` (a compact always-on rule in `AGENTS.md`) — concise by default but no live switching, because agy's hooks only fire on tool events (`PreToolUse`/`PostToolUse`/`Stop`) with no per-turn reinjection equivalent.
-- **`flow-model-usage`** — describes Claude's Haiku/Opus/Sonnet routing; irrelevant to Antigravity's Gemini models.
+- **`flow-model-usage-claude` vs `flow-model-usage-agy`** — Claude gets routing guidance (Haiku/Opus/Sonnet) the agent can act on by picking subagent models. agy can't switch models mid-session (`--model` is fixed at launch), so the agent instead gets `flow-model-usage-agy`: it knows its current tier and warns you to relaunch with a stronger model when a task is clearly too heavy for a light one. See "Choosing an agy model" below.
+
+### Choosing an agy model
+
+`agy --model` sets the model for the whole session (run `agy models` for the list). Pick at launch by the work; the `flow-model-usage-agy` rule nudges you if you started light for a heavy task.
+
+| Work | Launch with |
+|---|---|
+| Quick edits, search, mechanical changes | `agy --model 'Gemini 3.5 Flash (Low/Medium)'` |
+| Implementation, multi-step tasks | `agy --model 'Gemini 3.5 Flash (High)'` or `'Gemini 3.1 Pro (Low)'` |
+| Architecture, planning, deep review | `agy --model 'Gemini 3.1 Pro (High)'` or `'Claude Opus 4.6 (Thinking)'` |
+
+Switching mid-session means relaunching — add `--continue` to keep the conversation.
 
 ---
 

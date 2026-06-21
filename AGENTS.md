@@ -36,6 +36,8 @@ Adding a new category? Pick a short lowercase code, add a row here and to the RE
 
 Names are `kebab-case`. The prefix becomes part of the user-facing name: a command `flow-handoff.md` is invoked as `/flow-handoff` and autocompletes next to other `flow-` commands.
 
+**Tool-specific items carry a `-claude` / `-agy` suffix.** When a rule (or skill) exists in two tool-targeted variants because the behavior differs per tool, name them `<cat>-<name>-claude` and `<cat>-<name>-agy` with matching `targets`. Example: `flow-model-usage-claude` (Claude routing) and `flow-model-usage-agy` (agy model-fit warning). A single item targeting both tools needs no suffix.
+
 ## Frontmatter
 
 Every file carries `targets` controlling which tools receive it:
