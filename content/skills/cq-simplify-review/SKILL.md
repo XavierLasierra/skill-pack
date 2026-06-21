@@ -1,5 +1,5 @@
 ---
-name: simplify-review
+name: cq-simplify-review
 description: Review a diff or files for over-engineering only — what to delete, not what's broken. Finds reinvented stdlib, needless dependencies, speculative abstractions, dead flexibility. One line per finding, ends with a net line count. Use when asked "review for over-engineering", "what can we delete", "is this over-engineered", "simplify review". Complements correctness review (code-review) and applies nothing (use /simplify to apply).
 targets: [all]
 ---

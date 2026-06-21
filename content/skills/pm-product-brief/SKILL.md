@@ -1,5 +1,5 @@
 ---
-name: product-brief
+name: pm-product-brief
 description: Write a one-page product brief to kick off a new project or feature. Use when asked to draft a brief, frame a problem, pitch an idea, or start product planning from scratch — before a full spec exists. Text only.
 targets: [all]
 ---

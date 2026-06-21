@@ -1,5 +1,5 @@
 ---
-name: product-spec
+name: pm-product-spec
 description: Write a product specification or PRD for a feature or product. Use when asked to draft a spec, PRD, requirements doc, or detailed product definition. Builds on a brief if one exists. Text only.
 targets: [all]
 ---
@@ -8,7 +8,7 @@ targets: [all]
 The contract between product, design, and engineering: what we're building, for whom, and how we'll know it worked. Detailed enough to estimate and build from, not a design doc. Output text only.
 
 ### Before drafting
-Anchor on a [[product-brief]] if one exists — don't re-derive the problem, reference it. If no brief and the problem/users/goals are unclear, ask up to three questions, then draft. Where you must guess or something is undecided, flag it inline as `[NEEDS CLARIFICATION: <question>]` so reviewers see exactly what to confirm.
+Anchor on a [[pm-product-brief]] if one exists — don't re-derive the problem, reference it. If no brief and the problem/users/goals are unclear, ask up to three questions, then draft. Where you must guess or something is undecided, flag it inline as `[NEEDS CLARIFICATION: <question>]` so reviewers see exactly what to confirm.
 
 ### Template
 

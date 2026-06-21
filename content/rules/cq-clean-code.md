@@ -32,7 +32,7 @@ Never lazy about: input validation at trust boundaries, error handling that prev
 ### Deliberate shortcuts
 A deliberate simplification with a known ceiling is the one comment exception to "no WHAT comments". Mark it so the deferral can't rot into permanent:
 `SHORTCUT(owner): <what's simplified> — ceiling: <the limit>; upgrade: <the trigger to revisit>`
-Name both the ceiling (global lock, O(n²) scan, naive heuristic) and the trigger. No ceiling means it's not a shortcut, it's a bug. Harvest them with `/simplify-debt`.
+Name both the ceiling (global lock, O(n²) scan, naive heuristic) and the trigger. No ceiling means it's not a shortcut, it's a bug. Harvest them with `/cq-simplify-debt`.
 
 ### Defaults
 - No docstrings on obvious functions

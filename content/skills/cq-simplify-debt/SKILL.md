@@ -1,5 +1,5 @@
 ---
-name: simplify-debt
+name: cq-simplify-debt
 description: Harvest every SHORTCUT(owner) marker in the codebase into a debt ledger, so deliberate simplifications get tracked instead of rotting into "later means never". Use when asked "simplify debt", "what did we defer", "list the shortcuts", "shortcut ledger", or "what did we mark to do later". One-shot report, changes nothing.
 targets: [all]
 ---

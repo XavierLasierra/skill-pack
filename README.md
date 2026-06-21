@@ -26,26 +26,28 @@ bash uninstall.sh                      # remove everything it added
 
 ## What's in the pack
 
+Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (code quality), **`git-`** (version control & release), **`flow-`** (workflow & meta). Agents use the **`sp-`** namespace; hooks keep fixed names.
+
 | Type | Item | Claude | Antigravity |
 |---|---|:--:|:--:|
-| **rule** | `clean-code` | ✅ | ✅ |
-| **rule** | `conventional-commits` | ✅ | ✅ |
+| **rule** | `cq-clean-code` | ✅ | ✅ |
+| **rule** | `git-conventional-commits` | ✅ | ✅ |
 | **rule** | `git-workflow` | ✅ | ✅ |
-| **rule** | `model-usage` (Claude model tiers) | ✅ | — |
-| **rule** | `concise` (full spec, switchable) | ✅ | — |
-| **rule** | `concise-base` (always-on, static) | — | ✅ |
-| **skill** | `code-review` | ✅ | ✅ |
-| **skill** | `simplify-review` (over-engineering only) | ✅ | ✅ |
-| **skill** | `simplify-debt` (shortcut ledger) | ✅ | ✅ |
-| **skill** | `changelog` | ✅ | ✅ |
-| **skill** | `pull-request` | ✅ | ✅ |
-| **skill** | `product-brief` (kickoff one-pager) | ✅ | ✅ |
-| **skill** | `product-spec` (PRD) | ✅ | ✅ |
-| **skill** | `roadmap` (Now/Next/Later) | ✅ | ✅ |
-| **skill** | `backlog` (epics → stories) | ✅ | ✅ |
-| **skill** | `work-ticket` (tracker-agnostic ticket) | ✅ | ✅ |
-| **command** | `/handoff` | ✅ | ✅ |
-| **command** | `/concise` | ✅ | — |
+| **rule** | `flow-model-usage` (Claude model tiers) | ✅ | — |
+| **rule** | `flow-concise` (full spec, switchable) | ✅ | — |
+| **rule** | `flow-concise-base` (always-on, static) | — | ✅ |
+| **skill** | `cq-code-review` | ✅ | ✅ |
+| **skill** | `cq-simplify-review` (over-engineering only) | ✅ | ✅ |
+| **skill** | `cq-simplify-debt` (shortcut ledger) | ✅ | ✅ |
+| **skill** | `git-changelog` | ✅ | ✅ |
+| **skill** | `git-pull-request` | ✅ | ✅ |
+| **skill** | `pm-product-brief` (kickoff one-pager) | ✅ | ✅ |
+| **skill** | `pm-product-spec` (PRD) | ✅ | ✅ |
+| **skill** | `pm-roadmap` (Now/Next/Later) | ✅ | ✅ |
+| **skill** | `pm-backlog` (epics → stories) | ✅ | ✅ |
+| **skill** | `pm-work-ticket` (tracker-agnostic ticket) | ✅ | ✅ |
+| **command** | `/flow-handoff` | ✅ | ✅ |
+| **command** | `/flow-concise` | ✅ | — |
 | **agent** | `sp-reviewer`, `sp-investigator`, `sp-builder` | ✅ | ✅ |
 | **hook** | concise reinjection + statusline | ✅ | — |
 
@@ -70,8 +72,8 @@ On Antigravity everything except rules is packaged as a native plugin named **`s
 
 ### Tool-specific items
 
-- **`concise` vs `concise-base`** — both tools are concise by default. Claude gets the full `concise` rule (lite/full/ultra levels + examples) plus live switching via `/concise` and a per-turn reinjection hook. Antigravity gets `concise-base` (a compact always-on rule in `AGENTS.md`) — concise by default but no live switching, because agy's hooks only fire on tool events (`PreToolUse`/`PostToolUse`/`Stop`) with no per-turn reinjection equivalent.
-- **`model-usage`** — describes Claude's Haiku/Opus/Sonnet routing; irrelevant to Antigravity's Gemini models.
+- **`flow-concise` vs `flow-concise-base`** — both tools are concise by default. Claude gets the full `flow-concise` rule (lite/full/ultra levels + examples) plus live switching via `/flow-concise` and a per-turn reinjection hook. Antigravity gets `flow-concise-base` (a compact always-on rule in `AGENTS.md`) — concise by default but no live switching, because agy's hooks only fire on tool events (`PreToolUse`/`PostToolUse`/`Stop`) with no per-turn reinjection equivalent.
+- **`flow-model-usage`** — describes Claude's Haiku/Opus/Sonnet routing; irrelevant to Antigravity's Gemini models.
 
 ---
 
@@ -82,11 +84,11 @@ Both tools default to concise output.
 **Claude Code** — full system with live intensity switching:
 
 ```
-/concise lite    # drop filler only, keep sentence structure
-/concise full    # drop articles, filler, pleasantries, hedging (default)
-/concise ultra   # maximum compression, noun phrases and imperatives
-/concise off     # disable
-/concise         # show current level
+/flow-concise lite    # drop filler only, keep sentence structure
+/flow-concise full    # drop articles, filler, pleasantries, hedging (default)
+/flow-concise ultra   # maximum compression, noun phrases and imperatives
+/flow-concise off     # disable
+/flow-concise         # show current level
 ```
 
 Active level persists in `~/.skill-pack/concise-level`, is reinjected every turn by a hook, and shows in the status bar.
@@ -109,12 +111,14 @@ Claude keeps the `model`/`tools` frontmatter; the Antigravity plugin strips Clau
 
 ```
 content/
-  rules/      <name>.md          → CLAUDE.md / AGENTS.md blocks
-  skills/     <name>/SKILL.md    → native skills
-  commands/   <name>.md          → slash commands
-  agents/     <name>.md          → subagents
-  hooks/      *.sh               → Claude hooks
+  rules/      <cat>-<name>.md          → CLAUDE.md / AGENTS.md blocks
+  skills/     <cat>-<name>/SKILL.md    → native skills
+  commands/   <cat>-<name>.md          → slash commands
+  agents/     sp-<name>.md             → subagents
+  hooks/      *.sh                     → Claude hooks (fixed names)
 ```
+
+Files are flat within each type; the **category prefix** (`pm-`/`cq-`/`git-`/`flow-`) groups them — it survives into the destination name, so `/flow-handoff` autocompletes alongside other `flow-` commands. See `AGENTS.md` for the full convention.
 
 Every file carries a `targets` frontmatter key controlling which tools receive it:
 
@@ -137,9 +141,9 @@ Skills additionally require `name` and `description` (both tools trigger-match o
 
 - **Rules** are wrapped in markers in the global context file so install/uninstall touch nothing else:
   ```
-  # >>> skill-pack:rules/clean-code
+  # >>> skill-pack:rules/cq-clean-code
   …
-  # <<< skill-pack:rules/clean-code
+  # <<< skill-pack:rules/cq-clean-code
   ```
   Re-running syncs: **Updated** (content changed), **Removed stale** (deleted or no longer targets the tool), **Installed** (new).
 - **Skills / agents / commands** are written into each tool's native directory (Antigravity via its plugin). They sync by content diff.

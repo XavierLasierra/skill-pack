@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reinjects active concise level every turn. Handles /concise level-switch commands.
+# Reinjects active concise level every turn. Handles /flow-concise level-switch commands.
 
 LEVEL_FILE="$HOME/.skill-pack/concise-level"
 DEFAULT_LEVEL="full"
@@ -15,9 +15,9 @@ except (json.JSONDecodeError, KeyError, TypeError, ValueError):
     print('')
 " 2>/dev/null) || prompt=""
 
-# Handle /concise command
-if [[ "$prompt" =~ ^/concise([[:space:]]|$) ]]; then
-    arg=$(echo "$prompt" | sed 's|^/concise||' | tr -d '[:space:]')
+# Handle /flow-concise command
+if [[ "$prompt" =~ ^/flow-concise([[:space:]]|$) ]]; then
+    arg=$(echo "$prompt" | sed 's|^/flow-concise||' | tr -d '[:space:]')
     case "$arg" in
         lite|full|ultra|off)
             mkdir -p "$HOME/.skill-pack"
@@ -27,7 +27,7 @@ if [[ "$prompt" =~ ^/concise([[:space:]]|$) ]]; then
             ;;
         "")
             current=$(cat "$LEVEL_FILE" 2>/dev/null | tr -d '[:space:]' || echo "$DEFAULT_LEVEL")
-            echo "Concise: $current. Switch: /concise lite|full|ultra|off"
+            echo "Concise: $current. Switch: /flow-concise lite|full|ultra|off"
             exit 0
             ;;
         *)

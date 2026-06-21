@@ -3,7 +3,7 @@ targets: [claude]
 ---
 ## Concise Mode
 
-Three intensity levels. Switch with `/concise [lite|full|ultra|off]` in Claude Code. Default: full.
+Three intensity levels. Switch with `/flow-concise [lite|full|ultra|off]` in Claude Code. Default: full.
 
 ### lite
 Drop filler words only (just, really, basically, actually, simply, essentially).

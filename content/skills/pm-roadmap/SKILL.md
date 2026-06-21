@@ -1,5 +1,5 @@
 ---
-name: roadmap
+name: pm-roadmap
 description: Build a product roadmap. Use when asked to create, sequence, or prioritize a roadmap — themes and outcomes over time, not a dated feature list. Supports Now/Next/Later or quarterly. Text only.
 targets: [all]
 ---
@@ -42,5 +42,5 @@ Ask which the user wants if unclear; default to Now/Next/Later.
 - Each theme states *why it matters* — tie to the north star or a goal.
 - Note cross-theme dependencies inline (`depends on: …`).
 - "Not doing" is mandatory — it's how a roadmap says no.
-- Don't list every backlog item. If it's not theme-level, it belongs in the [[backlog]], not here.
-- No effort estimates or assignees — that lives in the [[backlog]], not the roadmap.
+- Don't list every backlog item. If it's not theme-level, it belongs in the [[pm-backlog]], not here.
+- No effort estimates or assignees — that lives in the [[pm-backlog]], not the roadmap.

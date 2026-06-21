@@ -1,5 +1,5 @@
 ---
-name: changelog
+name: git-changelog
 description: Generate a changelog or annotated git release tag from commits since the last tag. Use when asked to tag a release, cut a version, or produce release notes.
 targets: [all]
 ---

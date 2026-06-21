@@ -1,14 +1,14 @@
 ---
-name: backlog
+name: pm-backlog
 description: Break a spec or roadmap into a structured backlog of epics and user stories. Use when asked to decompose a feature, create epics/stories, slice work, or turn a spec into a backlog. Text only.
 targets: [all]
 ---
 ## Backlog
 
-Turns a [[product-spec]] or [[roadmap]] theme into a hierarchy a team can pull from: **Epic → Story → (later) ticket**. The job is *vertical slicing* — each story delivers user-visible value on its own, not a horizontal layer (no "build the database" story). Output text only.
+Turns a [[pm-product-spec]] or [[pm-roadmap]] theme into a hierarchy a team can pull from: **Epic → Story → (later) ticket**. The job is *vertical slicing* — each story delivers user-visible value on its own, not a horizontal layer (no "build the database" story). Output text only.
 
 ### Input
-Work from an existing spec/roadmap if given. If not, ask for the feature and its goal, then decompose. Don't invent requirements the source doesn't state — flag gaps inline as `[NEEDS CLARIFICATION: <question>]`.
+Work from an existing spec/pm-roadmap if given. If not, ask for the feature and its goal, then decompose. Don't invent requirements the source doesn't state — flag gaps inline as `[NEEDS CLARIFICATION: <question>]`.
 
 ### Structure
 
@@ -39,5 +39,5 @@ Walking skeleton first: the thinnest end-to-end slice that works, then layer val
 - Sizes are relative (S/M/L or points), never hours. If a story is `L`, suggest how to split it.
 - Priority with a scheme (P0/P1/P2 or MoSCoW) on every story — an unprioritized backlog is a wishlist.
 - Surface dependencies between stories explicitly; a backlog with hidden ordering is a trap.
-- Don't expand stories into full tickets here — that's the [[work-ticket]] skill, done when a story is pulled into a sprint.
+- Don't expand stories into full tickets here — that's the [[pm-work-ticket]] skill, done when a story is pulled into a sprint.
 - Sequencing leads with a walking skeleton (thin end-to-end path), then value-ordered.

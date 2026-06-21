@@ -1,5 +1,5 @@
 ---
-name: work-ticket
+name: pm-work-ticket
 description: Write a single implementable work ticket / user story for any tracker (Jira, Linear, GitHub). Use when asked to write a ticket, issue, user story, or task with acceptance criteria. Plain markdown, text only — never creates the ticket.
 targets: [all]
 ---
@@ -8,7 +8,7 @@ targets: [all]
 One well-formed ticket a developer can pick up cold and finish without a meeting. Tracker-agnostic, **plain markdown**. Text only — output the ticket; never create it in a tracker unless explicitly asked and a tool is available.
 
 ### Before writing
-Need the *what* and the *why*. If the user gives only a title, ask one question: what outcome does this serve? Then write. Pull context from a [[backlog]] story or [[product-spec]] if one exists rather than re-deriving it. Anything you can't resolve, mark inline as `[NEEDS CLARIFICATION: <question>]` rather than guessing silently.
+Need the *what* and the *why*. If the user gives only a title, ask one question: what outcome does this serve? Then write. Pull context from a [[pm-backlog]] story or [[pm-product-spec]] if one exists rather than re-deriving it. Anything you can't resolve, mark inline as `[NEEDS CLARIFICATION: <question>]` rather than guessing silently.
 
 ### Template
 
@@ -49,6 +49,6 @@ For bugs, replace Story/Context with:
 - Acceptance criteria are testable and in Given/When/Then form — each one a checkbox someone can verify true/false. No "works correctly".
 - Always include at least one edge/error-path criterion.
 - "Out of scope" present whenever the boundary isn't obvious — prevents scope creep mid-ticket.
-- A ticket should be one sitting of work. If acceptance criteria sprawl past ~5, it's an epic — split it (see [[backlog]]).
+- A ticket should be one sitting of work. If acceptance criteria sprawl past ~5, it's an epic — split it (see [[pm-backlog]]).
 - Notes may *suggest* an approach but never mandate implementation — leave the how to the assignee.
 - Plain markdown only. No Jira wiki markup, no HTML.
