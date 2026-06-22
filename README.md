@@ -62,6 +62,7 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `fe-touch` (touch/mobile/tablet interaction) | ✅ | ✅ | ✅ |
 | **skill** | `fe-ui-states` (loading/empty/error/success UX) | ✅ | ✅ | ✅ |
 | **skill** | `fe-ui-foundations` (spacing/type/tokens/dark mode) | ✅ | ✅ | ✅ |
+| **skill** | `flow-find-skills` (find external skills as reference) | ✅ | ✅ | ✅ |
 | **command** | `/flow-handoff` | ✅ | ✅ | ✅ |
 | **command** | `/flow-concise` | ✅ | — | — |
 | **agent** | `sp-reviewer`, `sp-investigator`, `sp-builder` | ✅ | ✅ | ✅ |
