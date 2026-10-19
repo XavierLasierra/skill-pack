@@ -193,9 +193,12 @@ for event, matcher, cmd in to_register:
     else:
         print(f'\033[0;90m–\033[0m Already registered: {event}')
 statusline_cmd = f'bash {shlex.quote(hook_dir + "/statusline.sh")}'
-if settings.get('statusLine', {}).get('command') != statusline_cmd:
+current_statusline = settings.get('statusLine', {}).get('command')
+if current_statusline is None:
     settings['statusLine'] = {'type': 'command', 'command': statusline_cmd}
     print(f'\033[0;32m✓\033[0m Registered: statusLine')
+elif current_statusline != statusline_cmd:
+    print(f'\033[1;33m!\033[0m Kept existing statusLine — to use skill-pack\'s, set it to: {statusline_cmd}')
 os.makedirs(os.path.dirname(settings_path), exist_ok=True)
 with open(settings_path, 'w') as f:
     json.dump(settings, f, indent=2); f.write('\n')
