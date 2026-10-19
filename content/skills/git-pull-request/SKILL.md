@@ -1,6 +1,6 @@
 ---
 name: git-pull-request
-description: Write a pull request title and description. Use when opening a PR, creating a pull request, or writing or filling in a PR description.
+description: Write a pull request title and description. Use when opening a PR, creating a pull request, or writing or filling in a PR description. Not commit messages, see git-commit.
 targets: [all]
 ---
 

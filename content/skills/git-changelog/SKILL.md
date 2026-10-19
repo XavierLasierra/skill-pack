@@ -1,6 +1,6 @@
 ---
 name: git-changelog
-description: Generate a changelog or annotated git release tag from commits since the last tag. Use when asked to tag a release, cut a version, or produce release notes.
+description: Generate a changelog or annotated git release tag from commits since the last tag. Use when asked to tag a release, cut or bump a version, write release notes, or summarize what changed since the last release.
 targets: [all]
 ---
 ## Git Changelog Tag
