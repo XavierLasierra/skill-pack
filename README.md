@@ -44,6 +44,7 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `cq-simplify-debt` (shortcut ledger) | ✅ | ✅ | ✅ |
 | **skill** | `git-changelog` | ✅ | ✅ | ✅ |
 | **skill** | `git-pull-request` | ✅ | ✅ | ✅ |
+| **skill** | `git-commit` (atomic commits from a dirty tree) | ✅ | ✅ | ✅ |
 | **skill** | `pm-product-brief` (kickoff one-pager) | ✅ | ✅ | ✅ |
 | **skill** | `pm-product-spec` (PRD) | ✅ | ✅ | ✅ |
 | **skill** | `pm-roadmap` (Now/Next/Later) | ✅ | ✅ | ✅ |
