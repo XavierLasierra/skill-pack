@@ -8,7 +8,8 @@ targets: [all]
 Fingers are not cursors. A layout can be responsive ([[fe-responsive]]) and still fail on touch if targets are tiny, cramped, or out of thumb reach.
 
 ### Target size
-- Minimum **44×44pt** (iOS HIG) / **48×48dp** (Android Material). WCAG 2.5.8 floor is 24×24 CSS px — treat that as the never-go-below, not the goal. See [[fe-a11y]].
+- Aim for **44×44pt** (Apple HIG; also WCAG 2.5.5 AAA, 44×44 CSS px) / **48×48dp** (Material).
+- WCAG 2.2 AA 2.5.8 floor is **24×24 CSS px** (or 24px spacing circle to neighbors) — the never-go-below, not the goal. This skill is the single home for target sizes; [[fe-a11y]] defers here.
 - The *hit area* must meet the minimum even if the visual is smaller — pad the target, don't shrink the finger. Icon buttons especially.
 - **≥ 8px** between adjacent targets to prevent mis-taps.
 
@@ -19,10 +20,10 @@ Fingers are not cursors. A layout can be responsive ([[fe-responsive]]) and stil
 ### Touch-first interaction
 - Never gate functionality behind `:hover` or right-click — touch has neither. Hover is enhancement only; the action must work on tap.
 - Use real controls (`<button>`, `<a>`, RN `Pressable`) so you get tap, focus, and a11y for free — not `onClick` on a `div`.
-- Give visible press feedback (active/pressed state); avoid 300ms tap delay (`touch-action: manipulation`).
+- Give visible press feedback (active/pressed state); optionally `touch-action: manipulation` to suppress double-tap-zoom delay on custom controls (not needed with a proper viewport meta).
 - Make swipe/long-press shortcuts, never the only way to do something.
 
 ### Viewport & safe areas
 - `<meta name="viewport" content="width=device-width, initial-scale=1">`; never disable zoom.
-- Keep content clear of notches, rounded corners, and home indicators: `env(safe-area-inset-*)` on web, `SafeAreaView`/insets in RN ([[fe-react-native-component]]).
+- Keep content clear of notches, rounded corners, and home indicators: `env(safe-area-inset-*)` on web, `react-native-safe-area-context` insets in RN, not the deprecated core `SafeAreaView` ([[fe-react-native-component]]).
 - Inputs ≥ 16px font on iOS or the browser force-zooms on focus.
