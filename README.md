@@ -191,4 +191,4 @@ Enable the pre-commit hook once per clone (native git, no dependencies):
 git config core.hooksPath .githooks
 ```
 
-On every commit it runs `scripts/validate.sh` — checks each `content/` item has the required frontmatter (`name`, `description`, valid `targets`) and that the README pack table is in sync — plus `shellcheck` on the shell scripts if installed (`brew install shellcheck`). Run it any time with `bash scripts/validate.sh`.
+On every commit it runs `scripts/validate.sh` — checks each `content/` item has the required frontmatter (`name`, `description`, valid `targets`) and that the README pack table is in sync — plus `shellcheck` on the shell scripts if installed (`brew install shellcheck`). Run it any time with `bash scripts/validate.sh`. CI (`.github/workflows/validate.yml`) runs the same checks on every push to `main` and every PR.
