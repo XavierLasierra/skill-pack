@@ -1,6 +1,6 @@
 ---
 name: fe-ui-states
-description: Design the loading, empty, error, and success states of a UI. Use when building data-driven screens, adding skeletons/spinners, designing empty states, error/retry UI, or handling the states beyond the happy path. The UX side of fe-react-data-fetching.
+description: Design the loading, empty, error, and success states of a UI. Use when building data-driven screens, adding skeletons/spinners, designing empty states, error/retry UI, or handling the states beyond the happy path. The UX side only — not fetching/caching code, for that see fe-react-data-fetching.
 targets: [all]
 ---
 ## UI States

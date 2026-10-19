@@ -1,6 +1,6 @@
 ---
 name: fe-react-component
-description: Write or refactor a clean React component. Use when asked to create, build, write, or refactor a React/JSX/TSX component, fix a messy component, design a component's props API, decide whether to reuse an existing component, or place a shared vs feature/domain component. Covers reuse-before-create, common vs domain components, composition, props design, hooks, lists/forms, and Server vs Client components. For state/effect discipline see fe-react-effects.
+description: Write or refactor a clean React component. Use to create/refactor a JSX/TSX component, design props, decide reuse vs new, or place shared vs domain components. Covers composition, hooks, Server vs Client. State/effects → fe-react-effects.
 targets: [all]
 ---
 ## React Component
@@ -60,9 +60,15 @@ type Props =
 - Custom hook the moment the same stateful logic appears in two components. Prefix `use`, one hook per file, return a stable shape.
 - Components and hooks must be pure: same inputs → same JSX, no side effects during render, no mutation of props/state.
 
+### React 19
+- `ref` is a regular prop on function components — no `forwardRef` for new code (deprecated path).
+- Render `<ThemeContext value={x}>` directly; `<Context.Provider>` is the legacy form.
+- `use(ctx)` reads context, `use(promise)` suspends on a promise; unlike hooks, callable conditionally.
+- Ref callbacks may return a cleanup function (runs on unmount) instead of receiving `null`.
+
 ### Lists & forms
 - `key` must be a stable id from the data — never the array index, never `Math.random()`.
-- Inputs: default to controlled (`value` + `onChange`). Reach for uncontrolled (`defaultValue`/refs) only for simple or perf-sensitive forms. Real forms (validation, many fields) → [[fe-react-forms]].
+- Forms (controlled vs uncontrolled, validation, actions) → [[fe-react-forms]].
 
 ### Server vs Client (RSC / Next.js App Router)
 - Default to Server Components. They ship zero JS, fetch data directly, and keep secrets server-side.

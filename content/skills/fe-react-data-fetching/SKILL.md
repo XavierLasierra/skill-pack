@@ -1,6 +1,6 @@
 ---
 name: fe-react-data-fetching
-description: Fetch and cache server data in React. Use when adding data fetching, wiring useQuery/useMutation, handling loading/error/refetch/caching, or deciding between TanStack Query and a raw useEffect fetch. Pairs with fe-react-effects.
+description: Fetch and cache server data in React. Use when adding data fetching, wiring useQuery/useMutation, handling loading/error/refetch/caching, or deciding between TanStack Query and a raw useEffect fetch. Pairs with fe-react-effects. For loading/empty/error UX see fe-ui-states.
 targets: [all]
 ---
 ## React Data Fetching
@@ -29,8 +29,15 @@ const { mutate, isPending } = useMutation({
 - **Read with `useQuery`, write with `useMutation`.** After a mutation, `invalidateQueries` the affected keys — don't manually `setState`.
 - Render the three states explicitly: pending, error, success — their UX (skeleton/empty/error) is [[fe-ui-states]]. No `data!` before the pending guard.
 - Don't copy server data into `useState` — read it from the cache. Mirroring is the same desync bug as [[fe-react-effects]] derived state.
-- Set sensible `staleTime` instead of refetching everything constantly.
+- Set sensible `staleTime` instead of refetching everything constantly. `gcTime` (renamed from `cacheTime` in v5) controls how long unused entries stay cached.
+- v5 removed `onSuccess`/`onError`/`onSettled` from `useQuery` — read `data`/`error` in render instead; they remain on `useMutation`.
+- Share key + fn with `queryOptions()` — one typed definition for `useQuery`, `prefetchQuery`, `getQueryData`.
+- `useSuspenseQuery` for Suspense: `data` is never undefined; loading goes to `<Suspense>`, errors to an error boundary.
 - Server Components (Next.js App Router): fetch directly in the server component; use TanStack Query for client-side cache/mutations on top.
+
+### Optimistic updates
+- Simple: render `mutation.variables` while `isPending` — no cache writes, auto-reverts on error.
+- Cross-component: `onMutate` (cancel queries, snapshot, `setQueryData`) → restore snapshot in `onError` → `invalidateQueries` in `onSettled`.
 
 ### Validate the whole response at the boundary
 A network response is a trust boundary, and TS types are erased at runtime — a `useQuery<Todo>` is a lie if the backend drifts. Treat the response as an anti-corruption layer: validate the *entire* response in the `queryFn`, not just the data.
@@ -52,4 +59,4 @@ queryFn: async () => {
 Reuse the same schemas as [[fe-react-forms]] where they overlap, and `z.infer` the types so the cache stays correctly typed. Not free — full-parse cost matters on large/hot payloads; prioritize external, third-party, or untyped APIs and critical responses, validate once, and skip it for internal end-to-end-typed endpoints.
 
 ### When a raw useEffect fetch is still fine
-One-off, uncached, no sharing — e.g. a single localStorage read or a fire-once load with no refetch. Then follow the [[fe-react-effects]] `ignore`-flag pattern to kill races. Anything cached, shared, polled, or refetched → TanStack Query.
+One-off, uncached, no sharing — e.g. a single localStorage read or a fire-once load with no refetch. Then use the `ignore`-flag race pattern in [[fe-react-effects]]. Anything cached, shared, polled, or refetched → TanStack Query.

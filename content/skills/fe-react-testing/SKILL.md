@@ -18,11 +18,11 @@ Test the component the way a user uses it. The more a test resembles real usage,
 3. `getByText` — non-interactive content.
 4. `getByTestId` — last resort, only when nothing semantic fits.
 
-`getBy*` (must exist) vs `queryBy*` (assert absence) vs `findBy*` (async, returns a promise).
+`getBy*` (must exist) vs `queryBy*` (assert absence) vs `findBy*` (async, returns a promise). Always query via `screen`.
 
 ### Interaction & async
-- Use `@testing-library/user-event`, not `fireEvent` — it models real key/click sequences. It's async: `await user.click(...)`.
-- For anything that appears after a fetch/transition, `await screen.findByRole(...)` — don't add manual sleeps.
+- Use `@testing-library/user-event`, not `fireEvent` — create `const user = userEvent.setup()` first; calls are async: `await user.click(...)`.
+- For anything that appears after a fetch/transition, prefer `await screen.findByRole(...)` over `waitFor` + `getBy` — no manual sleeps.
 - Mock the network at the boundary (e.g. MSW), not the component's own functions.
 
 ```tsx
@@ -36,6 +36,17 @@ test('submits the entered email', async () => {
 
   expect(onSubmit).toHaveBeenCalledWith({ email: 'a@b.com' })
 })
+```
+
+### Tooling
+- Runner: Vitest or Jest — same RTL code; `vi.fn()` vs `jest.fn()` is the only difference here.
+- `@testing-library/jest-dom` matchers read better than raw DOM props: `toBeInTheDocument`, `toBeDisabled`, `toHaveTextContent`, `toHaveAccessibleName`. (RNTL ships its own built-in matchers.)
+- Hooks: `renderHook(() => useThing())` for reusable hook logic; test through a component when the hook is only used by one.
+- React Native: `@testing-library/react-native` — `render`, `screen`, `userEvent.setup()` (press/type), same query priority (`getByRole`, `getByLabelText`, `getByText`, `getByTestId`).
+
+```tsx
+await user.type(screen.getByLabelText('Email'), 'a@b.com')
+await user.press(screen.getByRole('button', { name: 'Sign up' }))
 ```
 
 ### Shape

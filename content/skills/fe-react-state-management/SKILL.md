@@ -17,10 +17,11 @@ Half of "global state" problems disappear once server data moves to a query cach
 
 ### The ladder — stop at the first rung that holds
 1. **Lift state** to the nearest common parent. Pass props. Done for most cases.
-2. **Context** — for low-frequency, rarely-changing shared values: theme, locale, auth user, feature flags. Not for high-frequency state: every consumer re-renders on any change, so a cart/dashboard in Context lags.
-3. **Zustand** — the default external store when Context re-renders hurt. Simple, fast, selector-based subscriptions; good for ~90% of shared-state needs.
-4. **Jotai** — when you need fine-grained, atom-level reactivity and derived graphs; only the components reading a changed atom re-render.
-5. **Redux Toolkit** — large teams needing enforced patterns, middleware for complex side effects, or time-travel debugging. Most apps no longer need it; if you reach here, use RTK, never legacy Redux.
+2. **URL state** — filters, sort, pagination, selected tab/id that should survive refresh and be shareable: `useSearchParams` (or `nuqs` for typed params). The URL is the store; don't mirror it into `useState`.
+3. **Context** — for low-frequency, rarely-changing shared values: theme, locale, auth user, feature flags. Not for high-frequency state: every consumer re-renders on any change, so a cart/dashboard in Context lags.
+4. **Zustand** — the default external store when Context re-renders hurt. Simple, fast, selector-based subscriptions; good for ~90% of shared-state needs. Select slices (`useStore(s => s.count)`), never the whole store. v5: a selector returning a new object/array needs `useShallow`, or it loops/re-renders.
+5. **Jotai** — when you need fine-grained, atom-level reactivity and derived graphs; only the components reading a changed atom re-render.
+6. **Redux Toolkit** — large teams needing enforced patterns, middleware for complex side effects, or time-travel debugging. Most apps no longer need it; if you reach here, use RTK, never legacy Redux.
 
 ### Rules
 - Don't add a store "to be safe." Adding one is reversible; the complexity tax is not. Justify the rung.
