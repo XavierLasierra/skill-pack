@@ -155,6 +155,17 @@ write_if_changed() {
     fi
 }
 
+# Mirror a skill's supporting files (everything except SKILL.md) from $1 into $2,
+# removing destination files that no longer exist in the source.
+sync_skill_files() {
+    local src="$1" dst="$2"
+    find "$dst" -mindepth 1 ! -path "$dst/SKILL.md" -delete 2>/dev/null || true
+    (cd "$src" && find . -type f ! -path ./SKILL.md) | while IFS= read -r f; do
+        mkdir -p "$dst/$(dirname "$f")"
+        cp "$src/$f" "$dst/$f"
+    done
+}
+
 # ------------------------------------------------------------------
 # Claude Code
 # ------------------------------------------------------------------
@@ -251,6 +262,7 @@ install_claude() {
         if ! target_match "$src" "claude"; then skip "Skipped (not for claude): skills/$name"; continue; fi
         mkdir -p "$skills_dst/$name"
         strip_keys "$src" targets | add_marker | write_if_changed "$skills_dst/$name/SKILL.md" "skills/$name"
+        sync_skill_files "$d" "$skills_dst/$name"
     done
 
     # Agents → ~/.claude/agents/<name>.md  (keep Claude frontmatter; drop targets)
@@ -298,6 +310,7 @@ install_antigravity() {
         target_match "$d/SKILL.md" "antigravity" || continue
         mkdir -p "$stage/skills/$name"
         strip_keys "$d/SKILL.md" targets > "$stage/skills/$name/SKILL.md"
+        sync_skill_files "$d" "$stage/skills/$name"
         count=$((count+1))
     done
     for f in "$CONTENT_DIR"/agents/*.md; do
@@ -353,6 +366,7 @@ install_opencode() {
         if ! target_match "$src" "opencode"; then skip "Skipped (not for opencode): skills/$name"; continue; fi
         mkdir -p "$skills_dst/$name"
         strip_keys "$src" targets | add_marker | write_if_changed "$skills_dst/$name/SKILL.md" "skills/$name"
+        sync_skill_files "$d" "$skills_dst/$name"
     done
 
     # Agents → ~/.config/opencode/agents/<name>.md

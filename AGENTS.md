@@ -17,6 +17,8 @@ content/
   hooks/      *.sh                  → Claude hooks (fixed names)
 ```
 
+A skill dir may hold supporting files next to `SKILL.md` (`references/`, `scripts/`, templates) — the installer mirrors the whole dir. Reference them by relative path from `SKILL.md`.
+
 The top-level split is by **type**. The installer and `scripts/validate.sh` glob each type flatly (`content/skills/*/`, `content/rules/*.md`, …). **Keep it flat — no subfolders.** All destinations are flat, global namespaces, so names must be unique across the whole pack.
 
 ## Category prefix convention
