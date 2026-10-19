@@ -4,6 +4,9 @@
 LEVEL_FILE="$HOME/.skill-pack/concise-level"
 DEFAULT_LEVEL="full"
 
+level=$(cat "$LEVEL_FILE" 2>/dev/null | tr -d '[:space:]')
+[[ -z "$level" ]] && level="$DEFAULT_LEVEL"
+
 # Read prompt from Claude Code's stdin JSON payload
 _raw=$(cat)
 prompt=$(echo "$_raw" | python3 -c "
@@ -26,8 +29,7 @@ if [[ "$prompt" =~ ^/flow-concise([[:space:]]|$) ]]; then
             exit 0
             ;;
         "")
-            current=$(cat "$LEVEL_FILE" 2>/dev/null | tr -d '[:space:]' || echo "$DEFAULT_LEVEL")
-            echo "Concise: $current. Switch: /flow-concise lite|full|ultra|off"
+            echo "Concise: $level. Switch: /flow-concise lite|full|ultra|off"
             exit 0
             ;;
         *)
@@ -38,9 +40,6 @@ if [[ "$prompt" =~ ^/flow-concise([[:space:]]|$) ]]; then
 fi
 
 # Reinject active level rules
-level=$(cat "$LEVEL_FILE" 2>/dev/null | tr -d '[:space:]')
-[[ -z "$level" ]] && level="$DEFAULT_LEVEL"
-
 case "$level" in
     off)   exit 0;;
     lite)  echo "CONCISE MODE ACTIVE (lite). Drop filler words only. Keep articles and sentence structure.";;
