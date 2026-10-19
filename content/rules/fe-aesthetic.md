@@ -8,4 +8,4 @@ Building UI: don't ship generic AI-slop. The tells — reflexive Inter, purple/v
 - Commit to a deliberate identity: an intentional typeface, palette, and spacing rhythm, applied consistently — not the defaults.
 - Values come from theme tokens, never hardcoded colors/spacing/sizes, so a restyle is one edit.
 - Respect hierarchy, real states (loading/empty/error), responsiveness, and touch targets — polish is the baseline, not extra.
-- For the full design process (brainstorm tokens → critique → commit → build), use the `artifact-design` skill.
+- Process: brainstorm 2–3 token sets (type, palette, spacing) → critique against the tells above → commit to one → build. Systematize with [[fe-ui-foundations]]; use an `artifact-design` skill if your tool provides one.

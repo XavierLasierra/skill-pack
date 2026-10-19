@@ -1,11 +1,11 @@
 ---
 name: fe-ui-foundations
-description: Apply systematic UI consistency — spacing scale, type scale, design tokens, radius/elevation, dark mode. Use when values look arbitrary, spacing/sizing is inconsistent, setting up design tokens or a type scale, or adding dark mode. The standards layer; for bespoke visual identity use artifact-design.
+description: Apply systematic UI consistency — spacing scale, type scale, design tokens, radius/elevation, dark mode. Use when values look arbitrary, spacing/sizing is inconsistent, setting up design tokens or a type scale, or adding dark mode. The standards layer; for bespoke visual identity see the fe-aesthetic rule.
 targets: [all]
 ---
 ## UI Foundations
 
-Consistency is what separates clean UI from amateur UI: a small set of repeated values, never arbitrary ones. This is the systematic *standards* layer — the spacing/type/token rules. The bespoke palette and visual identity belong to `artifact-design`; this makes whatever identity you pick consistent.
+Consistency is what separates clean UI from amateur UI: a small set of repeated values, never arbitrary ones. This is the systematic *standards* layer — the spacing/type/token rules. The bespoke palette and visual identity belong to the [[fe-aesthetic]] rule; this makes whatever identity you pick consistent.
 
 ### Spacing — one scale, no magic numbers
 - All margin/padding/gap come from an **8pt scale**: 4, 8, 12, 16, 24, 32, 48, 64. Pick from the scale; never `padding: 13px`.
