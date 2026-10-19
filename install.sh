@@ -209,7 +209,7 @@ prune_skill_dir() {
     for d in "$base"/*/; do
         [[ -d "$d" ]] || continue
         local sf="${d}SKILL.md"
-        [[ -f "$sf" ]] && grep -qF "skill-pack: true" "$sf" 2>/dev/null || continue
+        grep -qF "skill-pack: true" "$sf" 2>/dev/null || continue
         local name; name="$(basename "$d")"
         local src="$CONTENT_DIR/skills/$name/SKILL.md"
         if [[ ! -f "$src" ]] || ! target_match "$src" "$tool"; then

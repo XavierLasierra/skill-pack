@@ -3,7 +3,6 @@
 
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_NAME="sp"
 MARKER_START="# >>> skill-pack:"
 MARKER_END="# <<< skill-pack:"
@@ -69,7 +68,7 @@ uninstall_claude() {
     if [[ -d "$HOME/.claude/skills" ]]; then
         for d in "$HOME/.claude/skills"/*/; do
             [[ -d "$d" ]] || continue
-            [[ -f "${d}SKILL.md" ]] && grep -qF "skill-pack: true" "${d}SKILL.md" 2>/dev/null || continue
+            grep -qF "skill-pack: true" "${d}SKILL.md" 2>/dev/null || continue
             rm -rf "$d"; log "Removed: skills/$(basename "$d")"
         done
         rmdir "$HOME/.claude/skills" 2>/dev/null || true
@@ -99,8 +98,11 @@ uninstall_claude() {
 uninstall_antigravity() {
     echo ""; echo "▸ Antigravity CLI (agy)"
     if command -v agy &>/dev/null; then
-        agy plugin uninstall "$PLUGIN_NAME" >/dev/null 2>&1 && log "Uninstalled plugin '$PLUGIN_NAME'" \
-            || skip "Plugin '$PLUGIN_NAME' not installed"
+        if agy plugin uninstall "$PLUGIN_NAME" >/dev/null 2>&1; then
+            log "Uninstalled plugin '$PLUGIN_NAME'"
+        else
+            skip "Plugin '$PLUGIN_NAME' not installed"
+        fi
     fi
     clean_blocks "$HOME/.gemini/AGENTS.md"
     rm -rf "$HOME/.skill-pack/antigravity"
@@ -115,7 +117,7 @@ uninstall_opencode() {
     if [[ -d "$base/skills" ]]; then
         for d in "$base/skills"/*/; do
             [[ -d "$d" ]] || continue
-            [[ -f "${d}SKILL.md" ]] && grep -qF "skill-pack: true" "${d}SKILL.md" 2>/dev/null || continue
+            grep -qF "skill-pack: true" "${d}SKILL.md" 2>/dev/null || continue
             rm -rf "$d"; log "Removed: skills/$(basename "$d")"
         done
         rmdir "$base/skills" 2>/dev/null || true
