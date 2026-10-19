@@ -42,6 +42,8 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `cq-code-review` | ✅ | ✅ | ✅ |
 | **skill** | `cq-simplify-review` (over-engineering only) | ✅ | ✅ | ✅ |
 | **skill** | `cq-simplify-debt` (shortcut ledger) | ✅ | ✅ | ✅ |
+| **skill** | `cq-debug` (systematic debugging) | ✅ | ✅ | ✅ |
+| **skill** | `cq-testing` (test strategy, unit → e2e) | ✅ | ✅ | ✅ |
 | **skill** | `git-changelog` | ✅ | ✅ | ✅ |
 | **skill** | `git-pull-request` | ✅ | ✅ | ✅ |
 | **skill** | `git-commit` (atomic commits from a dirty tree) | ✅ | ✅ | ✅ |
