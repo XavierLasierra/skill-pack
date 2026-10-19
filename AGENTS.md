@@ -47,7 +47,7 @@ Every file carries `targets` controlling which tools receive it:
 
 ```yaml
 ---
-targets: [all]                       # all tools (also the default if the key is omitted)
+targets: [all]                       # all tools — key is required (validate.sh rejects files without it)
 targets: [claude]                    # Claude only
 targets: [antigravity]               # Antigravity only
 targets: [opencode]                  # opencode only

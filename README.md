@@ -150,13 +150,13 @@ content/
   hooks/      *.sh                     → Claude hooks (fixed names)
 ```
 
-Files are flat within each type; the **category prefix** (`pm-`/`cq-`/`git-`/`flow-`) groups them — it survives into the destination name, so `/flow-handoff` autocompletes alongside other `flow-` commands. See `AGENTS.md` for the full convention.
+Files are flat within each type; the **category prefix** (`pm-`/`cq-`/`git-`/`flow-`/`fe-`) groups them — it survives into the destination name, so `/flow-handoff` autocompletes alongside other `flow-` commands. See `AGENTS.md` for the full convention.
 
 Every file carries a `targets` frontmatter key controlling which tools receive it:
 
 ```yaml
 ---
-targets: [all]          # all tools (default if omitted)
+targets: [all]          # all tools — key is required
 ---
 ```
 ```yaml
@@ -165,7 +165,7 @@ targets: [claude]       # Claude only — also: antigravity, opencode
 ---
 ```
 
-Skills additionally require `name` and `description` (both tools trigger-match on these). Add a file, run `bash install.sh`, and it's picked up automatically.
+Skills additionally require `name` (equal to the directory name) and `description` (every tool trigger-matches on these). Add a file, run `bash install.sh`, and it's picked up automatically.
 
 ---
 
