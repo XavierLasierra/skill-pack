@@ -99,9 +99,11 @@ On Antigravity everything except rules is packaged as a native plugin named **`s
 
 | Work | Launch with |
 |---|---|
-| Quick edits, search, mechanical changes | `agy --model 'Gemini 3.5 Flash (Low/Medium)'` |
-| Implementation, multi-step tasks | `agy --model 'Gemini 3.5 Flash (High)'` or `'Gemini 3.1 Pro (Low)'` |
-| Architecture, planning, deep review | `agy --model 'Gemini 3.1 Pro (High)'` or `'Claude Opus 4.6 (Thinking)'` |
+| Quick edits, search, mechanical changes | `agy --model 'Gemini 3.8 Flash (Low)'` or `'(Medium)'` |
+| Implementation, multi-step tasks | `agy --model 'Gemini 3.8 Flash (High)'` or `'Claude Sonnet 4.6 (Thinking)'` |
+| Architecture, planning, deep review | `agy --model 'Claude Opus 4.6 (Thinking)'` |
+
+Model names change between agy releases — check `agy models` before relying on this table.
 
 Switching mid-session means relaunching — add `--continue` to keep the conversation.
 

@@ -8,7 +8,7 @@ You know your current model and tier from the session. Before starting a clearly
 
 If you're on a light model (Gemini Flash, any level) for such a task, emit ONE non-blocking line, then proceed anyway:
 
-> ⚠ This looks like a <task type> task and you're on <current model>. For better results, relaunch with a stronger model, e.g. `agy --model 'Gemini 3.1 Pro (High)'` — add `--continue` to keep this conversation.
+> ⚠ This looks like a <task type> task and you're on <current model>. For better results, relaunch with a stronger model, e.g. `agy --model 'Claude Opus 4.6 (Thinking)'` (run `agy models` for the current list) — add `--continue` to keep this conversation.
 
 Rules:
 - Warn at most once per task. Never block, never wait — proceed with the work after the line.
