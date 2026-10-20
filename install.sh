@@ -98,7 +98,16 @@ remove_block() {
         return 1
     fi
     local tmp; tmp="$(mktemp)"
-    awk -v s="$start" -v e="$end" '$0==s{skip=1;next} skip&&$0==e{skip=0;next} !skip{print}' "$target" > "$tmp"
+    # Also drop the blank separator line upsert_block writes before each block,
+    # so repeated installs don't accumulate empty lines.
+    awk -v s="$start" -v e="$end" '
+        $0==s {skip=1; held=0; next}
+        skip && $0==e {skip=0; next}
+        skip {next}
+        held {print ""; held=0}
+        $0=="" {held=1; next}
+        {print}
+        END {if (held) print ""}' "$target" > "$tmp"
     mv "$tmp" "$target" || { rm -f "$tmp"; return 1; }
 }
 
