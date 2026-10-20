@@ -36,7 +36,7 @@ remove_claude_hooks() {
     done
     if [[ -f "$settings" ]] && command -v python3 &>/dev/null; then
         python3 - "$hook_dst" "$settings" <<'PYEOF'
-import json, shlex, sys
+import json, os, shlex, sys
 hook_dir, settings_path = sys.argv[1], sys.argv[2]
 to_remove = {f'bash {shlex.quote(hook_dir + "/session-start.sh")}',
              f'bash {shlex.quote(hook_dir + "/user-prompt-submit.sh")}'}
@@ -48,9 +48,16 @@ for event in list(settings.get('hooks', {})):
     for entry in entries:
         entry['hooks'] = [h for h in entry.get('hooks', []) if h.get('command') not in to_remove]
     settings['hooks'][event] = [e for e in entries if e.get('hooks')]
-settings['hooks'] = {k: v for k, v in settings.get('hooks', {}).items() if v}
+remaining_hooks = {k: v for k, v in settings.get('hooks', {}).items() if v}
+if remaining_hooks:
+    settings['hooks'] = remaining_hooks
+else:
+    settings.pop('hooks', None)
 if settings.get('statusLine', {}).get('command') == f'bash {shlex.quote(hook_dir + "/statusline.sh")}':
     del settings['statusLine']
+if not settings:
+    os.remove(settings_path)
+    sys.exit(0)
 with open(settings_path, 'w') as f:
     json.dump(settings, f, indent=2); f.write('\n')
 PYEOF
