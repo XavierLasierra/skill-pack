@@ -4,7 +4,7 @@
 LEVEL_FILE="$HOME/.skill-pack/concise-level"
 DEFAULT_LEVEL="full"
 
-level=$(cat "$LEVEL_FILE" 2>/dev/null | tr -d '[:space:]')
+level=$(tr -d '[:space:]' 2>/dev/null < "$LEVEL_FILE")
 [[ -z "$level" ]] && level="$DEFAULT_LEVEL"
 
 # Read prompt from Claude Code's stdin JSON payload
