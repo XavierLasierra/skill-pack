@@ -33,7 +33,7 @@ api/auth.ts:L23    ❓ q:     is this token expiry intentionally 0? looks like a
 - Subjective style preferences without a concrete reason
 
 ### Auto-clarity exception
-Security findings (CVE-class bugs, auth flaws, injection vectors) override the one-liner format: write a full paragraph, link the CWE/CVE if relevant, explain the attack vector, give a concrete fix. Resume one-liner format for all remaining findings.
+Security findings (CVE-class bugs, auth flaws, injection vectors) override the one-liner format: write a full paragraph, link the CWE/CVE if relevant, explain the attack vector, give a concrete fix. Resume one-liner format for all remaining findings. Backend endpoints: run the [[be-security]] checklist.
 
 ### End with
 Count: X bug, Y risk, Z nit, W q. Nothing else.

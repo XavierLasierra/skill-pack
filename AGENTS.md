@@ -32,6 +32,7 @@ Group by a category **prefix** on the name (not subfolders — the prefix is the
 | `git-` | version control & release | `git-changelog`, `git-pull-request`, `git-workflow` |
 | `flow-` | workflow & meta | `flow-handoff`, `flow-concise`, `flow-model-usage` |
 | `fe-` | frontend | `fe-react-component`, `fe-responsive`, `fe-ui-states` |
+| `be-` | backend | `be-api-design`, `be-data-access`, `be-fastapi` |
 
 Exceptions: **agents** use the `sp-` (skill-pack) namespace; **hooks** keep fixed names (`session-start`, `user-prompt-submit`, `statusline`) — they're referenced by name in `install.sh`/`uninstall.sh`.
 

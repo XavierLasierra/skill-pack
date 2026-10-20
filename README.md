@@ -27,7 +27,7 @@ bash uninstall.sh                      # remove everything it added
 
 ## What's in the pack
 
-Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (code quality), **`git-`** (version control & release), **`flow-`** (workflow & meta), **`fe-`** (frontend). Agents use the **`sp-`** namespace; hooks keep fixed names.
+Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (code quality), **`git-`** (version control & release), **`flow-`** (workflow & meta), **`fe-`** (frontend), **`be-`** (backend). Agents use the **`sp-`** namespace; hooks keep fixed names.
 
 | Type | Item | Claude | Antigravity | opencode |
 |---|---|:--:|:--:|:--:|
@@ -39,6 +39,7 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **rule** | `flow-concise` (full spec, switchable) | ✅ | — | — |
 | **rule** | `flow-concise-base` (always-on, static) | — | ✅ | ✅ |
 | **rule** | `fe-aesthetic` (anti-slop UI nudge) | ✅ | ✅ | ✅ |
+| **rule** | `be-baseline` (always-on backend defaults) | ✅ | ✅ | ✅ |
 | **skill** | `cq-code-review` | ✅ | ✅ | ✅ |
 | **skill** | `cq-simplify-review` (over-engineering only) | ✅ | ✅ | ✅ |
 | **skill** | `cq-simplify-debt` (shortcut ledger) | ✅ | ✅ | ✅ |
@@ -66,6 +67,16 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `fe-ui-states` (loading/empty/error/success UX) | ✅ | ✅ | ✅ |
 | **skill** | `fe-ui-foundations` (spacing/type/tokens/dark mode) | ✅ | ✅ | ✅ |
 | **skill** | `flow-find-skills` (find external skills as reference) | ✅ | ✅ | ✅ |
+| **skill** | `be-api-design` (endpoints, errors, pagination, idempotency) | ✅ | ✅ | ✅ |
+| **skill** | `be-security` (OWASP API Top 10 checklist) | ✅ | ✅ | ✅ |
+| **skill** | `be-data-access` (transactions, N+1, locking, outbox) | ✅ | ✅ | ✅ |
+| **skill** | `be-migrations` (zero-downtime schema changes) | ✅ | ✅ | ✅ |
+| **skill** | `be-reliability` (timeouts, retries, jobs, shutdown) | ✅ | ✅ | ✅ |
+| **skill** | `be-observability` (OpenTelemetry, logs, metrics) | ✅ | ✅ | ✅ |
+| **skill** | `be-fastapi` (FastAPI idioms) | ✅ | ✅ | ✅ |
+| **skill** | `be-django` (Django + DRF idioms) | ✅ | ✅ | ✅ |
+| **skill** | `be-node` (Node/TS, Express/Fastify/NestJS idioms) | ✅ | ✅ | ✅ |
+| **skill** | `be-symfony` (Symfony + Doctrine idioms) | ✅ | ✅ | ✅ |
 | **command** | `/flow-handoff` | ✅ | ✅ | ✅ |
 | **command** | `/flow-concise` | ✅ | — | — |
 | **agent** | `sp-reviewer`, `sp-investigator`, `sp-builder` | ✅ | ✅ | ✅ |
@@ -153,7 +164,7 @@ content/
   hooks/      *.sh                     → Claude hooks (fixed names)
 ```
 
-Files are flat within each type; the **category prefix** (`pm-`/`cq-`/`git-`/`flow-`/`fe-`) groups them — it survives into the destination name, so `/flow-handoff` autocompletes alongside other `flow-` commands. See `AGENTS.md` for the full convention.
+Files are flat within each type; the **category prefix** (`pm-`/`cq-`/`git-`/`flow-`/`fe-`/`be-`) groups them — it survives into the destination name, so `/flow-handoff` autocompletes alongside other `flow-` commands. See `AGENTS.md` for the full convention.
 
 Every file carries a `targets` frontmatter key controlling which tools receive it:
 

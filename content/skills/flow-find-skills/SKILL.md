@@ -8,7 +8,7 @@ targets: [all]
 Before writing a new skill-pack item, find what already exists in the open ecosystem and learn from it. Good prior art saves reinventing structure, surfaces edge cases, and gives a quality bar to beat. This finds and evaluates external skills as **reference** — it does not install third-party skills into the pack.
 
 ### Scope the need
-Name the **domain** and the **specific task** in one line before searching, plus which pack category it would land in (`pm-`/`cq-`/`git-`/`flow-`/`fe-`). "React form validation skill" → `fe-` category. "PR description writer" → `git-`. This frames both the search query and where the result fits.
+Name the **domain** and the **specific task** in one line before searching, plus which pack category it would land in (`pm-`/`cq-`/`git-`/`flow-`/`fe-`/`be-`). "React form validation skill" → `fe-` category. "PR description writer" → `git-`. This frames both the search query and where the result fits.
 
 ### Search the ecosystem
 Work down until you have 2–3 strong references:
