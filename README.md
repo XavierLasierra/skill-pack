@@ -51,7 +51,7 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `pm-product-spec` (PRD) | ✅ | ✅ | ✅ |
 | **skill** | `pm-roadmap` (Now/Next/Later) | ✅ | ✅ | ✅ |
 | **skill** | `pm-backlog` (epics → stories) | ✅ | ✅ | ✅ |
-| **skill** | `pm-work-ticket` (tracker-agnostic ticket) | ✅ | ✅ | ✅ |
+| **skill** | `pm-work-ticket` (ticket as text, or filed via tracker tool) | ✅ | ✅ | ✅ |
 | **skill** | `fe-react-component` (clean React components) | ✅ | ✅ | ✅ |
 | **skill** | `fe-react-effects` (state/effect discipline) | ✅ | ✅ | ✅ |
 | **skill** | `fe-react-native-component` (RN-specific deltas) | ✅ | ✅ | ✅ |
