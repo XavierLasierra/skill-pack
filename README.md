@@ -47,6 +47,7 @@ Items are grouped by category prefix: **`pm-`** (product planning), **`cq-`** (c
 | **skill** | `cq-testing` (test strategy, unit → e2e) | ✅ | ✅ | ✅ |
 | **skill** | `git-changelog` | ✅ | ✅ | ✅ |
 | **skill** | `git-pull-request` | ✅ | ✅ | ✅ |
+| **skill** | `git-pr-review` (verify, approve per comment, post one GitHub review) | ✅ | ✅ | ✅ |
 | **skill** | `git-commit` (atomic commits from a dirty tree) | ✅ | ✅ | ✅ |
 | **skill** | `pm-product-brief` (kickoff one-pager) | ✅ | ✅ | ✅ |
 | **skill** | `pm-product-spec` (PRD) | ✅ | ✅ | ✅ |

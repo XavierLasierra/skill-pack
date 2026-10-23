@@ -1,6 +1,6 @@
 ---
 name: cq-code-review
-description: Review a diff, PR, branch, or files for bugs, risks, and quality issues. Use when asked to review code, audit a file, or check a PR. One finding per line with location, problem, and fix. Not over-engineering/what-to-delete review, see cq-simplify-review; not debugging a failure, see cq-debug.
+description: Review a diff, PR, branch, or files for bugs, risks, and quality issues. Use when asked to review code, audit a file, or check a PR. One finding per line with location, problem, and fix. Not over-engineering/what-to-delete review, see cq-simplify-review; not debugging a failure, see cq-debug; not reviewing a teammate's GitHub PR to post comments, see git-pr-review.
 targets: [all]
 ---
 ## Code Review
